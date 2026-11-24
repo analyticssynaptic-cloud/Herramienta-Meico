@@ -1,0 +1,746 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#4A0F2D">
+<title>Meico · Supervisores</title>
+<link rel="icon" href="../productos/terra-vega-malbec.jpg">
+<link rel="apple-touch-icon" href="../productos/terra-vega-malbec.jpg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700;800&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<style>
+  :root{--vino:#7B1E4B;--vino-d:#4A0F2D;--vino-dd:#2A0819;--vino-l:#B04A74;--rosa:#F7ECF0;--oro:#C9A24A;--oro-l:#E9CF8F;--crema:#F8F4F1;--ink:#26151B;--ink2:#7C6A6F;--muted:#B9A9AE;--line:#EFE3E6;--ok:#18a957;--ok-s:#e4f7ec;--warn:#d98a13;--warn-s:#fdf3e2;--err:#d23b54;--err-s:#fdecef;--r:18px}
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+  body{font-family:Inter,-apple-system,Segoe UI,sans-serif;background:var(--crema);color:var(--ink);font-size:14.5px;line-height:1.45;-webkit-font-smoothing:antialiased;padding-bottom:90px}
+  h1,h2,h3,.serif{font-family:'Playfair Display',Georgia,serif}
+  button,select,input{font-family:inherit;font-size:15px}
+  .wrap{max-width:1100px;margin:0 auto;padding:0 14px}
+
+  /* PIN */
+  .pin{position:fixed;inset:0;z-index:500;background:radial-gradient(120% 70% at 50% 100%,#5E1436 0%,#3A0B24 45%,#1E0610 100%);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;color:#fff;text-align:center}
+  .pin.oculto{display:none}
+  .pin h1{font-size:34px;letter-spacing:4px;color:#fff}.pin h1 small{display:block;font-family:Inter;font-size:11px;letter-spacing:3px;color:var(--oro-l);margin-top:6px;font-weight:700}
+  .pin svg{width:200px;margin:18px auto 8px;display:block}
+  .pin p{opacity:.85;margin:6px 0 18px;font-size:14px}
+  .pin input{width:min(320px,100%);padding:16px 18px;border-radius:30px;border:1.5px solid rgba(255,255,255,.4);background:rgba(255,255,255,.12);color:#fff;font-size:20px;text-align:center;letter-spacing:6px}
+  .pin input:focus{outline:none;border-color:var(--oro)}
+  .pin button{margin-top:14px;width:min(320px,100%);padding:16px;border:0;border-radius:30px;background:linear-gradient(135deg,var(--oro-l),var(--oro));color:var(--vino-dd);font-weight:800;font-size:16px;cursor:pointer}
+  .pin .err{color:#ffb3c1;min-height:20px;margin-top:10px;font-size:13px}
+
+  /* TOPBAR */
+  .top{background:linear-gradient(135deg,#5E1436 0%,#7B1E4B 48%,#2A0819 100%);color:#fff;border-bottom:2px solid var(--oro);padding:max(14px,env(safe-area-inset-top)) 0 14px;position:sticky;top:0;z-index:50}
+  .top .wrap{display:flex;align-items:center;gap:12px}
+  .logo{font-family:'Playfair Display';font-weight:800;font-size:22px;letter-spacing:3px}
+  .logo small{display:block;font-family:Inter;font-size:10px;letter-spacing:2px;color:var(--oro-l);font-weight:700}
+  .top .esp{flex:1}
+  .act{font-size:11px;text-align:right;opacity:.9;line-height:1.3}
+  .act b{display:block;font-size:12px;color:var(--oro-l)}
+  .ibtn{width:40px;height:40px;border-radius:50%;border:1px solid rgba(255,255,255,.3);background:rgba(255,255,255,.1);color:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0}
+  .ibtn svg{width:19px;height:19px}
+  .ibtn.girando svg{animation:gira .8s linear infinite}@keyframes gira{to{transform:rotate(360deg)}}
+
+  /* SEGMENTADORES */
+  .seg{background:#fff;border-radius:var(--r);margin:14px 0;box-shadow:0 10px 30px -18px rgba(74,15,45,.35);border:1px solid var(--line);overflow:hidden}
+  .seg-h{display:flex;align-items:center;gap:10px;padding:12px 14px;cursor:pointer}
+  .seg-h b{font-family:'Playfair Display';font-size:17px;flex:1}
+  .seg-h .resumen{font-size:12px;color:var(--ink2);flex:2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:right}
+  .seg-b{padding:0 14px 14px;display:grid;grid-template-columns:minmax(0,1fr);gap:10px}
+  .seg-b>*,.fila2>*,.campo{min-width:0}
+  .campo input{min-width:0;max-width:100%}
+  input[type=date]{-webkit-appearance:none;appearance:none;display:block}
+  .seg.cerrado .seg-b{display:none}
+  .vista{display:grid;grid-template-columns:1fr 1fr;background:var(--rosa);border-radius:14px;padding:4px}
+  .vista button{border:0;background:transparent;padding:10px;border-radius:11px;font-weight:700;color:var(--vino);cursor:pointer}
+  .vista button.on{background:var(--vino);color:#fff;box-shadow:0 6px 14px -8px var(--vino)}
+  .chips{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;padding-bottom:2px}.chips::-webkit-scrollbar{display:none}
+  .chip{flex-shrink:0;border:1.5px solid var(--line);background:#fff;border-radius:20px;padding:7px 12px;font-size:13px;font-weight:600;color:var(--ink2);cursor:pointer;white-space:nowrap}
+  .chip.on{border-color:var(--vino);background:var(--rosa);color:var(--vino)}
+  .fila2{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:8px}
+  .campo label{display:block;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--ink2);margin-bottom:4px}
+  .campo select,.campo input{width:100%;padding:11px 12px;border-radius:12px;border:1.5px solid var(--line);background:#fffdfc;color:var(--ink);min-height:44px;-webkit-appearance:none;appearance:none}
+  .campo select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='18' height='18' viewBox='0 0 24 24' fill='none' stroke='%237B1E4B' stroke-width='2.4'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 10px center;padding-right:32px}
+  .campo select:focus,.campo input:focus{outline:none;border-color:var(--vino-l)}
+  .limpiar{justify-self:end;border:0;background:none;color:var(--vino);font-weight:700;font-size:13px;cursor:pointer;padding:4px}
+
+  /* CONSULTA (perfil PDV/persona) */
+  .perfil{background:linear-gradient(135deg,#fff,#FBF3F0);border:1.5px solid var(--oro);border-radius:var(--r);padding:14px;margin-bottom:14px;display:none}
+  .perfil.on{display:block}
+  .perfil-h{display:flex;align-items:center;gap:12px;margin-bottom:10px}
+  .perfil-h img,.perfil-h .ini{width:56px;height:56px;border-radius:16px;object-fit:cover;background:var(--rosa);display:flex;align-items:center;justify-content:center;font-weight:800;color:var(--vino);font-size:20px;flex-shrink:0}
+  .perfil-h b{font-family:'Playfair Display';font-size:19px;display:block}.perfil-h span{font-size:12.5px;color:var(--ink2)}
+  .perfil-x{margin-left:auto;border:0;background:var(--rosa);color:var(--vino);border-radius:20px;padding:7px 11px;font-weight:700;font-size:12px;cursor:pointer}
+  .perfil-m{display:grid;grid-template-columns:repeat(auto-fit,minmax(90px,1fr));gap:8px}
+  .perfil-m div{background:#fff;border:1px solid var(--line);border-radius:12px;padding:8px;text-align:center}
+  .perfil-m b{display:block;font-size:18px;color:var(--vino)}.perfil-m span{font-size:11px;color:var(--ink2)}
+
+  /* KPIs */
+  .reportes{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:-2px 0 12px}
+  .rep-btn{border:0;border-radius:22px;padding:10px 15px;font-weight:800;font-size:13.5px;color:#2A0819;background:linear-gradient(135deg,var(--oro-l),var(--oro));cursor:pointer;box-shadow:0 8px 18px -10px rgba(201,162,74,.9)}
+  .rep-nota{font-size:12px;color:var(--ink2);flex:1;min-width:200px}
+  #reporte{display:none}
+  @media print{
+    @page{size:A4;margin:12mm}
+    body{background:#fff;padding:0}
+    body>*:not(#reporte){display:none!important}
+    #reporte{display:block!important;color:#222;font-size:11px}
+  }
+  .r-head{display:flex;justify-content:space-between;align-items:flex-end;border-bottom:2.5px solid #7B1E4B;padding-bottom:8px;margin-bottom:10px}
+  .r-head h1{font-size:22px;color:#4A0F2D;letter-spacing:2px}.r-head h1 small{display:block;font-family:Inter;font-size:9px;letter-spacing:2px;color:#A8875A}
+  .r-head .r-meta{text-align:right;font-size:10px;color:#555}
+  .r-tit{font-family:'Playfair Display',Georgia,serif;font-size:17px;color:#4A0F2D;margin:6px 0 2px}
+  .r-sub{font-size:10.5px;color:#555;margin-bottom:10px}
+  .r-kpis{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin-bottom:12px}
+  .r-kpis div{border:1px solid #e5d6da;border-radius:6px;padding:6px;text-align:center}.r-kpis b{display:block;font-size:15px;color:#4A0F2D}.r-kpis span{font-size:8.5px;text-transform:uppercase;color:#777}
+  .r-h2{font-size:12px;text-transform:uppercase;letter-spacing:1px;color:#7B1E4B;border-bottom:1px solid #e5d6da;padding-bottom:3px;margin:12px 0 6px}
+  #reporte table{font-size:10px}#reporte th{font-size:8.5px}#reporte td{padding:4px 5px}
+  .r-vis{border:1px solid #e5d6da;border-radius:8px;padding:8px;margin-bottom:8px;page-break-inside:avoid;display:grid;grid-template-columns:1fr 150px;gap:10px}
+  .r-vis h3{font-size:12.5px;font-family:Inter;margin-bottom:2px}.r-vis .r-l{font-size:10px;color:#444;margin:1.5px 0}
+  .r-fotos{display:flex;gap:4px}.r-fotos figure{flex:1;text-align:center;font-size:8.5px;color:#777}.r-fotos img{width:100%;height:92px;object-fit:cover;border-radius:5px;border:1px solid #ddd}
+  .r-gest .r-fotos img{height:220px}.r-gest .r-vis{grid-template-columns:1fr}
+  .r-pie{margin-top:14px;font-size:9px;color:#888;text-align:center;border-top:1px solid #eee;padding-top:6px}
+  .kpis{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:14px}
+  @media(min-width:640px){.kpis{grid-template-columns:repeat(5,1fr)}}
+  .kpi{background:#fff;border:1px solid var(--line);border-radius:16px;padding:12px;position:relative;overflow:hidden}
+  .kpi::after{content:'';position:absolute;right:-18px;top:-18px;width:60px;height:60px;border-radius:50%;background:var(--rosa)}
+  .kpi span{font-size:11px;font-weight:700;color:var(--ink2);text-transform:uppercase;letter-spacing:.5px;position:relative;z-index:1}
+  .kpi b{display:block;font-family:'Playfair Display';font-size:26px;color:var(--vino-d);line-height:1.15;margin-top:3px;position:relative;z-index:1}
+  .kpi em{font-style:normal;font-size:11.5px;color:var(--ink2)}
+  .kpi.verde b{color:var(--ok)}.kpi.alerta b{color:var(--err)}
+
+  /* TABS */
+  .tabs{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;margin-bottom:12px;position:sticky;top:70px;z-index:40;background:var(--crema);padding:6px 0}.tabs::-webkit-scrollbar{display:none}
+  .tab{flex-shrink:0;border:0;border-radius:20px;padding:9px 14px;font-weight:700;font-size:13.5px;background:#fff;color:var(--ink2);border:1px solid var(--line);cursor:pointer}
+  .tab.on{background:var(--vino);color:#fff;border-color:var(--vino)}
+  .tab .n{display:inline-block;min-width:20px;padding:0 6px;border-radius:10px;background:rgba(0,0,0,.08);margin-left:5px;font-size:11.5px}
+  .tab.on .n{background:rgba(255,255,255,.22)}
+  .panel{display:none}.panel.on{display:block}
+
+  /* TARJETAS DE VISITA */
+  .grid{display:grid;gap:10px}
+  @media(min-width:700px){.grid{grid-template-columns:repeat(2,1fr)}}
+  @media(min-width:1000px){.grid{grid-template-columns:repeat(3,1fr)}}
+  .card{background:#fff;border:1px solid var(--line);border-radius:var(--r);padding:12px;cursor:pointer;transition:transform .15s,box-shadow .15s}
+  .card:active{transform:scale(.99)}
+  .card-h{display:flex;gap:11px;align-items:flex-start}
+  .ava{width:58px;height:58px;border-radius:15px;object-fit:cover;background:var(--rosa);flex-shrink:0;display:flex;align-items:center;justify-content:center;color:var(--vino);font-weight:800;font-size:20px}
+  .card-t{flex:1;min-width:0}
+  .card-t b{display:block;font-size:15px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .card-t span{display:block;font-size:12.5px;color:var(--ink2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .pill{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:800;padding:4px 9px;border-radius:20px;margin-top:5px}
+  .pill.en{background:var(--ok-s);color:var(--ok)}.pill.en::before{content:'';width:7px;height:7px;border-radius:50%;background:var(--ok);animation:lat 1.4s infinite}
+  @keyframes lat{50%{opacity:.25}}
+  .pill.ce{background:#f1ecee;color:var(--ink2)}
+  .pill.no{background:var(--err-s);color:var(--err)}
+  .horas span{white-space:nowrap}
+  .horas{display:flex;flex-wrap:wrap;align-items:center;gap:4px 12px;margin-top:10px;font-size:12.5px;color:var(--ink2);background:var(--crema);border-radius:10px;padding:7px 9px}
+  .horas b{color:var(--ink)}
+  .mets{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:9px}
+  .met{text-align:center;background:var(--rosa);border-radius:10px;padding:6px 2px}
+  .met b{display:block;font-size:16px;color:var(--vino-d)}.met span{font-size:10.5px;color:var(--ink2)}
+  .vinos{display:flex;gap:6px;margin-top:9px;flex-wrap:wrap}
+  .vmini{display:flex;align-items:center;gap:4px;background:#fff;border:1px solid var(--line);border-radius:20px;padding:2px 9px 2px 2px;font-size:11.5px;font-weight:600}
+  .vmini img{width:24px;height:24px;object-fit:contain;mix-blend-mode:multiply}
+  .vacio{text-align:center;color:var(--ink2);padding:30px 10px;background:#fff;border-radius:var(--r);border:1px dashed var(--line)}
+
+  /* RANKING / TABLAS / BARRAS */
+  .bloque{background:#fff;border:1px solid var(--line);border-radius:var(--r);padding:14px;margin-bottom:12px}
+  .bloque h3{font-size:17px;margin-bottom:10px}
+  .bar{display:flex;align-items:center;gap:9px;margin:8px 0}
+  .bar img{width:36px;height:36px;object-fit:contain;mix-blend-mode:multiply;flex-shrink:0}
+  .bar .bt{flex:1;min-width:0}.bar .bt span{display:block;font-size:12.5px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .bar .tr{height:9px;border-radius:5px;background:var(--rosa);margin-top:4px;overflow:hidden}
+  .bar .tr i{display:block;height:100%;border-radius:5px;background:linear-gradient(90deg,var(--vino-l),var(--vino))}
+  .bar .v{font-weight:800;color:var(--vino-d);min-width:34px;text-align:right}
+  table{width:100%;border-collapse:collapse;font-size:13px}
+  th{text-align:left;font-size:10.5px;text-transform:uppercase;letter-spacing:.5px;color:var(--ink2);padding:7px 6px;border-bottom:1.5px solid var(--line);white-space:nowrap}
+  td{padding:9px 6px;border-bottom:1px solid var(--line)}
+  td.n,th.n{text-align:right}
+  tr.click{cursor:pointer}tr.click:active{background:var(--rosa)}
+  .tabla{overflow-x:auto}
+  .dias{display:flex;align-items:flex-end;gap:5px;height:170px;overflow-x:auto;padding-top:20px}
+  .dia{flex:1;min-width:30px;display:flex;flex-direction:column;align-items:center;gap:4px;height:100%;justify-content:flex-end}
+  .dia i{width:100%;max-width:34px;border-radius:7px 7px 3px 3px;background:linear-gradient(180deg,var(--vino-l),var(--vino));position:relative;min-height:3px}
+  .dia i em{position:absolute;top:-17px;left:50%;transform:translateX(-50%);font-style:normal;font-size:10.5px;font-weight:800;color:var(--vino-d)}
+  .dia span{font-size:10px;color:var(--ink2);white-space:nowrap}
+  #mapa{height:62vh;border-radius:var(--r);border:1px solid var(--line)}
+  .leaflet-popup-content{font-family:Inter;font-size:12.5px}.leaflet-popup-content img{width:120px;border-radius:10px;display:block;margin-bottom:6px}
+
+  /* DETALLE */
+  .hoja-bd{position:fixed;inset:0;background:rgba(30,6,16,.55);z-index:300;opacity:0;pointer-events:none;transition:opacity .25s}
+  .hoja-bd.on{opacity:1;pointer-events:auto}
+  .hoja{position:fixed;left:0;right:0;bottom:0;z-index:310;background:var(--crema);border-radius:24px 24px 0 0;max-height:92vh;overflow-y:auto;transform:translateY(105%);transition:transform .32s cubic-bezier(.2,.8,.2,1);max-width:760px;margin:0 auto;padding-bottom:max(20px,env(safe-area-inset-bottom))}
+  .hoja.on{transform:none}
+  .hoja-top{position:sticky;top:0;background:var(--crema);padding:14px 16px 10px;display:flex;gap:12px;align-items:center;border-bottom:1px solid var(--line);z-index:2}
+  .hoja-top b{font-family:'Playfair Display';font-size:19px;display:block}.hoja-top span{font-size:12.5px;color:var(--ink2)}
+  .hoja-top .cerrar{margin-left:auto}
+  .hoja-c{padding:14px 16px;display:grid;gap:12px}
+  .fotos{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .fotos figure{background:#fff;border:1px solid var(--line);border-radius:14px;overflow:hidden}
+  .fotos img{width:100%;height:190px;object-fit:cover;display:block;cursor:zoom-in;background:var(--rosa)}
+  .fotos figcaption{font-size:12px;padding:7px 9px;color:var(--ink2)}.fotos figcaption b{color:var(--ink)}
+  .sinfoto{height:190px;display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:12.5px;background:var(--rosa)}
+  .sec{background:#fff;border:1px solid var(--line);border-radius:14px;padding:12px}
+  .sec h4{font-size:12px;text-transform:uppercase;letter-spacing:.6px;color:var(--vino);margin-bottom:8px}
+  .lin{display:flex;justify-content:space-between;gap:10px;padding:6px 0;border-bottom:1px solid var(--line);font-size:13px}.lin:last-child{border:0}
+  .lin span{color:var(--ink2)}.lin b{text-align:right}
+  .mapa-mini{width:100%;height:200px;border:0;border-radius:12px;display:block}
+  .mods{display:flex;flex-wrap:wrap;gap:6px}
+  .mod{font-size:11.5px;font-weight:700;padding:5px 9px;border-radius:20px;background:#f1ecee;color:var(--muted)}.mod.ok{background:var(--ok-s);color:var(--ok)}
+  .evid{display:flex;gap:10px;align-items:center;padding:6px 0}.evid img{width:64px;height:64px;border-radius:10px;object-fit:cover;cursor:zoom-in}
+
+  /* ZOOM */
+  .zoom{position:fixed;inset:0;z-index:600;background:#14060C;display:none;flex-direction:column}.zoom.on{display:flex}
+  .zoom-a{flex:1;overflow:hidden;display:flex;align-items:center;justify-content:center;touch-action:none}
+  .zoom-a img{max-width:94%;max-height:100%;border-radius:12px;transition:transform .08s linear;user-select:none}
+  .zoom-b{display:flex;justify-content:center;gap:10px;padding:12px 16px max(16px,env(safe-area-inset-bottom))}
+  .zoom-b button,.zoom-x{min-width:54px;height:46px;border-radius:23px;border:1px solid rgba(201,162,74,.6);background:rgba(255,255,255,.08);color:#fff;font-size:19px;font-weight:700;cursor:pointer}
+  .zoom-t{display:flex;align-items:center;padding:max(12px,env(safe-area-inset-top)) 16px 8px;color:#fff;gap:10px}.zoom-t b{flex:1;font-family:'Playfair Display'}
+
+  /* ARIA */
+  .aria-btn{position:fixed;right:14px;bottom:calc(env(safe-area-inset-bottom,0px) + 18px);z-index:200;display:flex;align-items:center;gap:8px;border:0;border-radius:30px;padding:8px 16px 8px 8px;background:linear-gradient(135deg,var(--vino),var(--vino-d));color:#fff;font-weight:800;box-shadow:0 12px 26px -10px rgba(74,15,45,.7);cursor:pointer}
+  .aria-btn .av{width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,var(--oro-l),var(--oro));display:flex;align-items:center;justify-content:center;color:var(--vino-dd);font-family:'Playfair Display';font-size:18px}
+  .aria{position:fixed;inset:0;z-index:400;background:rgba(30,6,16,.55);display:none;align-items:flex-end;justify-content:center}.aria.on{display:flex}
+  .aria-c{width:100%;max-width:620px;height:min(88vh,760px);background:#fff;border-radius:22px 22px 0 0;display:flex;flex-direction:column;padding:14px 14px calc(12px + env(safe-area-inset-bottom,0px))}
+  .aria-h{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+  .aria-h .av{width:42px;height:42px;border-radius:50%;background:linear-gradient(135deg,var(--oro-l),var(--oro));display:flex;align-items:center;justify-content:center;color:var(--vino-dd);font-family:'Playfair Display';font-weight:800;font-size:20px}
+  .aria-h b{display:block;font-size:16px}.aria-h span{font-size:12px;color:var(--ink2)}
+  .aria-h button{margin-left:auto;border:0;background:var(--rosa);border-radius:10px;padding:8px 12px;font-weight:700;cursor:pointer;color:var(--vino)}
+  .aria-ctx{font-size:11.5px;color:var(--ink2);background:var(--crema);border-radius:10px;padding:6px 9px;margin-bottom:8px}
+  .aria-log{flex:1;overflow:auto;display:flex;flex-direction:column;gap:8px;padding:2px}
+  .m{padding:10px 12px;border-radius:14px;font-size:14px;max-width:92%;white-space:pre-wrap;word-wrap:break-word;line-height:1.45}
+  .m.u{align-self:flex-end;background:var(--rosa);border:1px solid #EBCFD9}.m.a{align-self:flex-start;background:#f6f1f0}
+  .m.a .copiar{display:block;margin-top:8px;border:0;background:#fff;border-radius:14px;padding:5px 10px;font-size:12px;font-weight:700;color:var(--vino);cursor:pointer}
+  .sug{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;margin:8px 0}.sug::-webkit-scrollbar{display:none}
+  .sug button{flex-shrink:0;white-space:nowrap;border:1px solid var(--line);background:#fff;border-radius:16px;padding:7px 11px;font-size:12.5px;cursor:pointer;color:var(--ink)}
+  .sug button.v{background:linear-gradient(135deg,var(--vino),var(--vino-d));color:#fff;border-color:var(--vino)}
+  .aria-row{display:flex;gap:7px}
+  .aria-row input{flex:1;min-width:0;border:1.5px solid var(--line);border-radius:12px;padding:12px;font-size:16px}
+  .aria-row button{border:0;border-radius:12px;min-width:46px;min-height:46px;color:#fff;background:var(--vino);font-size:16px;cursor:pointer}
+  .aria-row .voz{background:#4A3439}.aria-row .mic.on{background:var(--ok)}
+</style>
+</head>
+<body>
+
+<!-- PIN -->
+<div class="pin" id="pin">
+  <h1>MEICO<small>DASHBOARD DE SUPERVISORES</small></h1>
+  <svg viewBox="0 0 200 110" aria-hidden="true"><defs><linearGradient id="pv" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#B04A74"/><stop offset="1" stop-color="#5E1436"/></linearGradient></defs>
+    <path d="M60 106 L60 46 Q60 34 69 28 L69 6 L79 6 L79 28 Q88 34 88 46 L88 106 Z" fill="#2A0819" stroke="#C9A24A" stroke-width="1"/><rect x="67" y="0" width="14" height="9" rx="2" fill="#C9A24A"/><rect x="64" y="62" width="20" height="22" rx="2" fill="#F6EDE6"/>
+    <g transform="translate(118 40) rotate(-10)"><path d="M-15 0 C-15 22 -8 33 0 33 C8 33 15 22 15 0Z" fill="none" stroke="#E9CF8F" stroke-width="1.6"/><path d="M-13 14 C-12 24 -7 31 0 31 C7 31 12 24 13 14Z" fill="url(#pv)"/><line x1="0" y1="33" x2="0" y2="60" stroke="#E9CF8F" stroke-width="1.6"/><ellipse cx="0" cy="61" rx="10" ry="2.4" fill="#E9CF8F"/></g>
+    <g transform="translate(148 40) rotate(10)"><path d="M-15 0 C-15 22 -8 33 0 33 C8 33 15 22 15 0Z" fill="none" stroke="#E9CF8F" stroke-width="1.6"/><path d="M-13 12 C-12 24 -7 31 0 31 C7 31 12 24 13 12Z" fill="url(#pv)"/><line x1="0" y1="33" x2="0" y2="60" stroke="#E9CF8F" stroke-width="1.6"/><ellipse cx="0" cy="61" rx="10" ry="2.4" fill="#E9CF8F"/></g>
+    <g fill="#C9A24A"><circle cx="133" cy="28" r="2"/><circle cx="127" cy="22" r="1.4"/><circle cx="139" cy="20" r="1.6"/></g>
+  </svg>
+  <p>Ingresa el PIN de supervisor para ver la gestión del equipo.</p>
+  <input type="password" id="pinInput" inputmode="numeric" autocomplete="current-password" placeholder="PIN" maxlength="20">
+  <button type="button" id="pinBtn">Entrar</button>
+  <div class="err" id="pinErr"></div>
+</div>
+
+<!-- TOP -->
+<header class="top">
+  <div class="wrap">
+    <div class="logo">MEICO<small>SUPERVISORES</small></div>
+    <div class="esp"></div>
+    <div class="act" id="act"><b>—</b>Actualizando…</div>
+    <button class="ibtn" id="btnRec" type="button" aria-label="Actualizar ahora"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg></button>
+  </div>
+</header>
+
+<main class="wrap">
+  <!-- 1. SEGMENTADORES -->
+  <section class="seg" id="seg">
+    <div class="seg-h" id="segH"><b>Segmentadores</b><span class="resumen" id="segRes"></span><span style="color:var(--vino)">▾</span></div>
+    <div class="seg-b">
+      <div class="vista"><button type="button" data-vista="hoy" class="on">Gestión de hoy</button><button type="button" data-vista="hist">Histórico</button></div>
+      <div class="chips" id="presets">
+        <button class="chip" data-p="hoy">Hoy</button><button class="chip" data-p="ayer">Ayer</button><button class="chip" data-p="7">Últimos 7 días</button>
+        <button class="chip" data-p="30">Últimos 30 días</button><button class="chip" data-p="mes">Este mes</button><button class="chip" data-p="todo">Todo</button>
+      </div>
+      <div class="fila2">
+        <div class="campo"><label for="fDesde">Desde</label><input type="date" id="fDesde"></div>
+        <div class="campo"><label for="fHasta">Hasta</label><input type="date" id="fHasta"></div>
+      </div>
+      <div class="fila2">
+        <div class="campo"><label for="fCiudad">Ciudad</label><select id="fCiudad"><option value="">Todas</option></select></div>
+        <div class="campo"><label for="fEstado">Estado</label><select id="fEstado"><option value="">Todos</option><option value="en_pdv">En el punto</option><option value="cerrada">Jornada cerrada</option></select></div>
+      </div>
+      <div class="campo"><label for="fPdv">Punto de venta</label><select id="fPdv"><option value="">Todos los puntos</option></select></div>
+      <div class="campo"><label for="fAsesor">Asesor</label><select id="fAsesor"><option value="">Todo el equipo</option></select></div>
+      <div class="campo"><label for="fCodigo">Buscar una gestión por código</label>
+        <div style="display:flex;gap:8px"><input type="text" id="fCodigo" placeholder="MNV-20261201-153000-123" autocapitalize="characters" autocomplete="off" style="text-transform:uppercase"><button type="button" id="btnCodigo" class="rep-btn" style="flex-shrink:0">Buscar</button></div>
+        <div id="codErr" style="font-size:12px;color:var(--err);margin-top:4px"></div></div>
+      <button type="button" class="limpiar" id="btnLimpiar">Limpiar filtros</button>
+    </div>
+  </section>
+
+  <!-- 2. CONSULTA POR PDV O PERSONA -->
+  <section class="perfil" id="perfil"></section>
+
+  <div class="reportes" id="reportes">
+    <button type="button" class="rep-btn" id="btnRepGrupo">📄 Reporte PDF del grupo</button>
+    <span class="rep-nota">Descarga en PDF lo que tienes filtrado (persona, PDV, ciudad o fechas).</span>
+  </div>
+
+  <!-- 3. KPIs -->
+  <section class="kpis" id="kpis"></section>
+
+  <!-- 4. PESTAÑAS -->
+  <nav class="tabs" id="tabs">
+    <button class="tab on" data-t="equipo">Equipo<span class="n" id="nEquipo">0</span></button>
+    <button class="tab" data-t="sin">Sin reporte<span class="n" id="nSin">0</span></button>
+    <button class="tab" data-t="ranking">Ranking</button>
+    <button class="tab" data-t="tendencia">Tendencia</button>
+    <button class="tab" data-t="mapa">Mapa</button>
+  </nav>
+  <section class="panel on" data-p="equipo"><div class="grid" id="lista"></div></section>
+  <section class="panel" data-p="sin"><div class="grid" id="sinRep"></div></section>
+  <section class="panel" data-p="ranking"><div id="ranking"></div></section>
+  <section class="panel" data-p="tendencia"><div id="tendencia"></div></section>
+  <section class="panel" data-p="mapa"><div id="mapa"></div></section>
+</main>
+
+<!-- REPORTE (solo se ve al imprimir / guardar PDF) -->
+<div id="reporte"></div>
+
+<!-- DETALLE -->
+<div class="hoja-bd" id="hojaBd"></div>
+<div class="hoja" id="hoja"></div>
+
+<!-- ZOOM -->
+<div class="zoom" id="zoom">
+  <div class="zoom-t"><b id="zoomT"></b><button class="zoom-x" id="zoomX" type="button" aria-label="Cerrar">✕</button></div>
+  <div class="zoom-a" id="zoomA"><img id="zoomI" alt=""></div>
+  <div class="zoom-b"><button type="button" data-z="-1">−</button><button type="button" data-z="0" style="font-size:14px;padding:0 14px">Ajustar</button><button type="button" data-z="1">+</button></div>
+</div>
+
+<!-- ARIA -->
+<button class="aria-btn" id="ariaBtn" type="button"><span class="av">A</span>Pregúntale a ARIA</button>
+<div class="aria" id="aria">
+  <div class="aria-c">
+    <div class="aria-h"><div class="av">A</div><div><b>ARIA</b><span>Analista del equipo · responde con los datos filtrados</span></div><button type="button" id="ariaX">Cerrar</button></div>
+    <div class="aria-ctx" id="ariaCtx"></div>
+    <div class="aria-log" id="ariaLog"><div class="m a">Hola, soy ARIA. Analizo la gestión de tu equipo con los mismos filtros que tienes en pantalla. Pregúntame quién no ha reportado, quién vende más, qué vinos rotan, a quién apoyar, o pídeme un mensaje para el grupo del equipo.</div></div>
+    <div class="sug" id="ariaSug">
+      <button class="v" data-q="Dame un resumen de la gestión con estos filtros.">📋 Resumen</button>
+      <button class="v" data-q="¿Quién no ha reportado y quién sigue sin cerrar jornada?">⏰ ¿Quién falta?</button>
+      <button class="v" data-q="¿Quién vende más y qué vinos están rotando mejor?">🏆 Top ventas</button>
+      <button class="v" data-q="¿A qué asesores debo apoyar primero y por qué? Dame acciones concretas.">🎯 ¿A quién apoyo?</button>
+      <button data-q="Dame las alertas importantes: sin venta, sin foto de salida, poca degustación, competencia activa.">⚠️ Alertas</button>
+      <button data-q="Redacta un mensaje corto de WhatsApp para el equipo reconociendo los resultados y motivando para seguir vendiendo.">💬 Mensaje al equipo</button>
+      <button data-q="Dame un speech de venta y respuestas a objeciones para compartir con el equipo, enfocado en los vinos que menos se están vendiendo.">🍷 Coaching de ventas</button>
+    </div>
+    <div class="aria-row">
+      <button class="mic" id="ariaMic" type="button" aria-label="Hablar">🎤</button>
+      <input id="ariaIn" type="text" placeholder="Pregunta sobre tu equipo…" maxlength="500" autocomplete="off">
+      <button id="ariaEnv" type="button" aria-label="Enviar">➤</button>
+      <button class="voz" id="ariaVoz" type="button" aria-label="Voz">🔊</button>
+    </div>
+  </div>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+(function(){
+'use strict';
+var $ = function(id){ return document.getElementById(id); };
+var DASH_URL = 'PEGA_AQUI_LA_URL_EXEC_DEL_DASHBOARD';
+var FOTOS = '../productos/';
+var LS_PIN = 'meico_sup_pin', REFRESCO_MS = 5 * 60 * 1000;
+var visitaAbierta = null, pin = '', D = null, vista = 'hoy', tabActual = 'equipo', proxima = 0, cargando = false, mapa = null, capa = null;
+var F = { desde:'', hasta:'', ciudad:'', pdv:'', asesor:'', estado:'' };
+
+// ---------- utilidades ----------
+function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
+function hoyBog(off){ var d = new Date(Date.now() + (off||0)*86400000); return new Intl.DateTimeFormat('en-CA',{timeZone:'America/Bogota'}).format(d); }
+function hora(iso){ return iso ? new Date(iso).toLocaleTimeString('es-CO',{timeZone:'America/Bogota',hour:'numeric',minute:'2-digit'}) : '—'; }
+function fechaCorta(dia){ if(!dia) return ''; var p = dia.split('-'); var d = new Date(+p[0], +p[1]-1, +p[2]); return d.toLocaleDateString('es-CO',{weekday:'short',day:'numeric',month:'short'}); }
+function dur(min){ if(min==null) return ''; var h=Math.floor(min/60), m=min%60; return h ? h+' h '+(m?m+' min':'') : m+' min'; }
+function iniciales(n){ return String(n||'?').split(' ').filter(Boolean).slice(0,2).map(function(x){ return x[0]; }).join('').toUpperCase(); }
+function num(n){ return Number(n||0).toLocaleString('es-CO'); }
+function idVino(nombre){
+  var t=(nombre||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'');
+  if(/nuit/.test(t)){ if(/black/.test(t)) return 'nuit-doree-black-ice'; if(/blanc|sec\b|seco/.test(t)&&!/ros/.test(t)) return 'nuit-doree-blanco-sec-ice'; return 'nuit-doree-rose-demisec-ice'; }
+  if(/lambrusco|botticello|boticello/.test(t)){ if(/bianco|blanc/.test(t)) return 'lambrusco-bianco-dolce'; if(/rosso|tinto/.test(t)) return 'lambrusco-rosso-dolce'; return 'lambrusco-rosato-dolce'; }
+  if(/terra/.test(t)){ if(/carmen/.test(t)) return 'terra-vega-carmenere'; if(/cabernet/.test(t)) return 'terra-vega-cabernet'; if(/merlot/.test(t)) return 'terra-vega-merlot'; if(/malbec/.test(t)) return 'terra-vega-malbec'; if(/sauvignon blanc|blanco/.test(t)) return 'terra-vega-sauvignon-blanc'; if(/rosad|rose/.test(t)) return 'terra-vega-rosado'; }
+  if(/mucho/.test(t)) return /blanca/.test(t) ? 'mucho-mas-blanca' : 'mucho-mas-negra';
+  return '';
+}
+function imgVino(n){ var id=idVino(n); return id ? FOTOS + id + '.jpg' : ''; }
+// API del Apps Script del Sheet de resultados (text/plain evita el preflight CORS)
+function api(cuerpo){
+  if(/PEGA_AQUI/.test(DASH_URL)) return Promise.reject(new Error('Falta configurar la URL del dashboard (despliegue del Apps Script de resultados).'));
+  return fetch(DASH_URL, { method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'}, body: JSON.stringify(cuerpo), redirect:'follow' })
+    .then(function(r){ return r.json(); });
+}
+function server(fn){
+  var a = Array.prototype.slice.call(arguments,1);
+  if(fn==='login') return api({accion:'login', pin:a[0]});
+  if(fn==='datos') return api({accion:'datos', pin:a[0], filtros:a[1]});
+  if(fn==='aria') return api({accion:'aria', pin:a[0], pregunta:a[1], historial:a[2], filtros:a[3]});
+  if(fn==='gestion') return api({accion:'gestion', pin:a[0], codigo:a[1]});
+  return Promise.reject(new Error('acción desconocida'));
+}
+
+// ---------- PIN ----------
+function entrar(p){
+  $('pinErr').textContent = ''; $('pinBtn').textContent = 'Verificando…';
+  server('login', p).then(function(r){
+    $('pinBtn').textContent = 'Entrar';
+    if(r && r.ok){ pin = p; try{ localStorage.setItem(LS_PIN, p); }catch(e){} $('pin').classList.add('oculto'); cargar(); }
+    else { $('pinErr').textContent = 'PIN incorrecto.'; try{ localStorage.removeItem(LS_PIN); }catch(e){} }
+  }).catch(function(e){ $('pinBtn').textContent = 'Entrar'; $('pinErr').textContent = 'Sin conexión: ' + (e && e.message || e); });
+}
+$('pinBtn').onclick = function(){ var p = $('pinInput').value.trim(); if(p) entrar(p); };
+$('pinInput').addEventListener('keydown', function(e){ if(e.key==='Enter') $('pinBtn').click(); });
+
+// ---------- SEGMENTADORES ----------
+function aplicarPreset(p){
+  var h = hoyBog();
+  if(p==='hoy'){ F.desde=h; F.hasta=h; }
+  else if(p==='ayer'){ F.desde=hoyBog(-1); F.hasta=hoyBog(-1); }
+  else if(p==='7'){ F.desde=hoyBog(-6); F.hasta=h; }
+  else if(p==='30'){ F.desde=hoyBog(-29); F.hasta=h; }
+  else if(p==='mes'){ F.desde=h.slice(0,8)+'01'; F.hasta=h; }
+  else if(p==='todo'){ F.desde=(D && D.opciones.primerDia) || hoyBog(-365); F.hasta=h; }
+  marcarPreset(p);
+}
+function marcarPreset(p){ Array.prototype.forEach.call(document.querySelectorAll('#presets .chip'), function(c){ c.classList.toggle('on', c.getAttribute('data-p')===p); }); }
+function ponerVista(v){
+  vista = v;
+  Array.prototype.forEach.call(document.querySelectorAll('.vista button'), function(b){ b.classList.toggle('on', b.getAttribute('data-vista')===v); });
+  aplicarPreset(v==='hoy' ? 'hoy' : '7'); sincronizarCampos(); cargar();
+}
+function sincronizarCampos(){ $('fDesde').value=F.desde; $('fHasta').value=F.hasta; $('fCiudad').value=F.ciudad; $('fEstado').value=F.estado; $('fPdv').value=F.pdv; $('fAsesor').value=F.asesor; resumenSeg(); }
+function resumenSeg(){
+  var r = [F.desde===F.hasta ? (F.desde===hoyBog() ? 'Hoy' : fechaCorta(F.desde)) : fechaCorta(F.desde)+' – '+fechaCorta(F.hasta)];
+  if(F.ciudad) r.push(F.ciudad); if(F.pdv) r.push(F.pdv);
+  if(F.asesor){ var a = D && D.opciones.asesores.filter(function(x){ return x.clave===F.asesor; })[0]; r.push(a ? a.nombre : F.asesor); }
+  if(F.estado) r.push(F.estado==='en_pdv'?'En el punto':'Cerradas');
+  $('segRes').textContent = r.join(' · ');
+}
+function llenarOpciones(){
+  if(!D) return;
+  var o = D.opciones;
+  var sel = function(id, primera, items){ var s=$(id), v=s.value; s.innerHTML = '<option value="">'+primera+'</option>' + items.join(''); s.value = v; };
+  sel('fCiudad','Todas', o.ciudades.map(function(c){ return '<option value="'+esc(c)+'">'+esc(c)+'</option>'; }));
+  sel('fPdv','Todos los puntos', o.pdvs.filter(function(p){ return !F.ciudad || p.ciudad===F.ciudad; }).map(function(p){ return '<option value="'+esc(p.pdv)+'">'+esc(p.pdv)+'</option>'; }));
+  sel('fAsesor','Todo el equipo', o.asesores.map(function(a){ return '<option value="'+esc(a.clave)+'">'+esc(a.nombre)+(a.documento?' · '+esc(a.documento):'')+'</option>'; }));
+  sincronizarCampos();
+}
+$('segH').onclick = function(){ $('seg').classList.toggle('cerrado'); };
+Array.prototype.forEach.call(document.querySelectorAll('.vista button'), function(b){ b.onclick = function(){ ponerVista(b.getAttribute('data-vista')); }; });
+$('presets').onclick = function(e){ var b = e.target.closest('.chip'); if(!b) return; aplicarPreset(b.getAttribute('data-p')); if(b.getAttribute('data-p')!=='hoy' && vista==='hoy'){ vista='hist'; Array.prototype.forEach.call(document.querySelectorAll('.vista button'), function(x){ x.classList.toggle('on', x.getAttribute('data-vista')==='hist'); }); } sincronizarCampos(); cargar(); };
+['fDesde','fHasta'].forEach(function(id){ $(id).onchange = function(){ F.desde=$('fDesde').value||F.desde; F.hasta=$('fHasta').value||F.hasta; if(F.hasta<F.desde) F.hasta=F.desde; marcarPreset(''); sincronizarCampos(); cargar(); }; });
+$('fCiudad').onchange = function(){ F.ciudad=this.value; F.pdv=''; llenarOpciones(); cargar(); };
+$('fPdv').onchange = function(){ F.pdv=this.value; cargar(); };
+$('fAsesor').onchange = function(){ F.asesor=this.value; cargar(); };
+$('fEstado').onchange = function(){ F.estado=this.value; cargar(); };
+$('btnLimpiar').onclick = function(){ F.ciudad=''; F.pdv=''; F.asesor=''; F.estado=''; llenarOpciones(); cargar(); };
+
+// ---------- CARGA Y AUTO-ACTUALIZACIÓN (5 min) ----------
+function cargar(){
+  if(!pin || cargando) return;
+  cargando = true; $('btnRec').classList.add('girando');
+  server('datos', pin, F).then(function(r){
+    cargando = false; $('btnRec').classList.remove('girando');
+    if(r && r.pin){ $('pin').classList.remove('oculto'); $('pinErr').textContent = 'Tu sesión expiró. Ingresa el PIN.'; return; }
+    if(!r || !r.success){ $('act').innerHTML = '<b>Error</b>' + esc(r && r.error || 'sin respuesta'); return; }
+    D = r; F.desde = r.desde; F.hasta = r.hasta;
+    proxima = Date.now() + REFRESCO_MS;
+    llenarOpciones(); pintar();
+  }).catch(function(e){ cargando = false; $('btnRec').classList.remove('girando'); $('act').innerHTML = '<b>Sin conexión</b>Reintentando en 5 min'; proxima = Date.now() + REFRESCO_MS; });
+}
+$('btnRec').onclick = cargar;
+setInterval(function(){
+  if(!D) return;
+  var falta = Math.max(0, proxima - Date.now());
+  var m = Math.floor(falta/60000), s = Math.floor(falta%60000/1000);
+  $('act').innerHTML = '<b>Actualizado ' + hora(D.generado) + '</b>Próxima en ' + m + ':' + (s<10?'0':'') + s;
+  if(falta <= 0 && !document.hidden) cargar();
+}, 1000);
+document.addEventListener('visibilitychange', function(){ if(!document.hidden && D && Date.now() > proxima) cargar(); });
+
+// ---------- PINTAR ----------
+function pintar(){
+  pintarPerfil(); pintarKpis(); pintarLista(); pintarSin(); pintarRanking(); pintarTendencia();
+  if(tabActual==='mapa') pintarMapa();
+  $('ariaCtx').textContent = 'Filtros: ' + $('segRes').textContent;
+  var per = F.asesor ? (D.opciones.asesores.filter(function(x){ return x.clave===F.asesor; })[0] || {}).nombre : '';
+  $('btnRepGrupo').textContent = per ? '📄 Reporte PDF de ' + per.split(' ')[0] : (F.pdv ? '📄 Reporte PDF del PDV' : '📄 Reporte PDF del grupo');
+}
+function pintarKpis(){
+  var k = D.kpis, unDia = D.desde===D.hasta;
+  var t = [
+    ['Visitas', num(k.visitas), unDia ? fechaCorta(D.desde) : 'en el período'],
+    ['Asesores', num(k.asesores), 'con gestión'],
+    [unDia && D.desde===D.hoy ? 'En el punto ahora' : 'Sin cerrar', num(k.enPdv), 'jornadas abiertas', 'verde'],
+    ['Jornadas cerradas', num(k.cerradas), k.sinFotoSalida ? k.sinFotoSalida+' sin foto de salida' : 'con salida'],
+    ['Unidades vendidas', num(k.unidades), 'conversión '+k.conversion+'%'],
+    ['Botellas degustadas', num(k.botellas), num(k.impactos)+' impactos'],
+    ['Obsequios', num(k.obsequios), num(k.encuestas)+' encuestas'],
+    ['PDV visitados', num(k.pdvVisitados)+'/'+num(k.pdvTotal), 'cobertura '+(k.pdvTotal?Math.round(k.pdvVisitados/k.pdvTotal*100):0)+'%'],
+    ['Competencia', num(k.competencia), 'visitas con actividad', k.competencia?'alerta':''],
+    ['Sin reporte', unDia ? num(k.sinReporte) : '—', unDia ? 'del equipo reciente' : 'elige un solo día', k.sinReporte?'alerta':'']
+  ];
+  $('kpis').innerHTML = t.map(function(x){ return '<div class="kpi '+(x[3]||'')+'"><span>'+x[0]+'</span><b>'+x[1]+'</b><em>'+x[2]+'</em></div>'; }).join('');
+}
+function vinosMini(productos){
+  return productos.slice(0,4).map(function(p){ var im=imgVino(p.producto); return '<span class="vmini">'+(im?'<img src="'+im+'" alt="">':'')+esc(String(p.producto).replace(/Edition|Blend - /g,'').slice(0,22))+' ×'+(p.cantidad!=null?p.cantidad:p.botellas)+'</span>'; }).join('');
+}
+function tarjeta(v, i){
+  var estado = v.estado==='en_pdv' ? '<span class="pill en">'+(v.dia===D.hoy?'En el punto':'Sin cerrar')+'</span>' : '<span class="pill ce">Jornada cerrada</span>';
+  return '<div class="card" data-i="'+i+'"><div class="card-h">'+
+    (v.fotoIngreso ? '<img class="ava" src="'+esc(v.fotoIngreso)+'" alt="" loading="lazy">' : '<div class="ava">'+iniciales(v.asesor)+'</div>')+
+    '<div class="card-t"><b>'+esc(v.asesor)+'</b><span>'+esc(v.pdv)+' · '+esc(v.ciudad)+'</span>'+estado+(D.desde!==D.hasta?' <span class="pill ce">'+fechaCorta(v.dia)+'</span>':'')+'</div></div>'+
+    '<div class="horas"><span>🟢 Ingreso <b>'+hora(v.ingreso)+'</b></span><span>🔴 Salida <b>'+(v.salida?hora(v.salida):'—')+'</b></span>'+(v.minutos!=null?'<span>⏱ '+dur(v.minutos)+'</span>':'')+'</div>'+
+    '<div class="mets"><div class="met"><b>'+v.unidades+'</b><span>unidades</span></div><div class="met"><b>'+v.botellas+'</b><span>botellas</span></div><div class="met"><b>'+v.impactos+'</b><span>impactos</span></div><div class="met"><b>'+v.voz.length+'</b><span>encuestas</span></div></div>'+
+    (v.productos.length ? '<div class="vinos">'+vinosMini(v.productos)+'</div>' : '<div class="vinos" style="font-size:12px;color:var(--ink2)">'+(v.venta==='No' ? '❌ Sin venta: '+esc(v.motivoNoVenta||'sin motivo') : (v.venta ? '' : '⏳ Ventas aún no reportadas'))+'</div>')+
+  '</div>';
+}
+function pintarLista(){
+  $('nEquipo').textContent = D.totalVisitas;
+  $('lista').innerHTML = D.visitas.length ? D.visitas.map(tarjeta).join('') + (D.totalVisitas > D.visitas.length ? '<div class="vacio">Mostrando '+D.visitas.length+' de '+D.totalVisitas+' visitas. Usa los segmentadores para acotar.</div>' : '')
+    : '<div class="vacio">No hay visitas con estos filtros.</div>';
+}
+function pintarSin(){
+  $('nSin').textContent = D.sinReporte.length;
+  if(D.desde !== D.hasta){ $('sinRep').innerHTML = '<div class="vacio">"Sin reporte" se calcula para un solo día. Elige Hoy, Ayer o una fecha.</div>'; return; }
+  $('sinRep').innerHTML = D.sinReporte.length ? D.sinReporte.map(function(s){
+    return '<div class="card" data-asesor="'+esc(s.clave)+'"><div class="card-h"><div class="ava" style="background:var(--err-s);color:var(--err)">'+iniciales(s.asesor)+'</div><div class="card-t"><b>'+esc(s.asesor)+'</b><span>Último reporte: '+fechaCorta(s.ultimoDia)+'</span><span>'+esc(s.ultimoPdv)+' · '+esc(s.ciudad)+'</span><span class="pill no">No ha reportado</span></div></div></div>';
+  }).join('') : '<div class="vacio">✅ Todo el equipo reciente tiene reporte este día.</div>';
+}
+function barras(lista, campo, etiqueta, conImg){
+  var max = Math.max.apply(null, lista.map(function(x){ return x[campo]; }).concat([1]));
+  return lista.map(function(x){ var im = conImg ? imgVino(x.vino) : '';
+    return '<div class="bar">'+(conImg?(im?'<img src="'+im+'" alt="">':'<span style="width:36px"></span>'):'')+'<div class="bt"><span>'+esc(x.vino||x.motivo)+'</span><div class="tr"><i style="width:'+Math.round(x[campo]/max*100)+'%"></i></div></div><div class="v">'+num(x[campo])+'</div></div>'; }).join('');
+}
+function pintarRanking(){
+  var h = '';
+  h += '<div class="bloque"><h3>Ventas por vino</h3>'+(D.ventasPorVino.length ? barras(D.ventasPorVino,'unidades','und',true) : '<div class="vacio">Sin ventas en el período.</div>')+'</div>';
+  if(D.degustacionPorVino.length) h += '<div class="bloque"><h3>Botellas degustadas</h3>'+barras(D.degustacionPorVino,'botellas','bot',true)+'</div>';
+  h += '<div class="bloque"><h3>Asesores</h3><div class="tabla"><table><tr><th>Asesor</th><th class="n">Visitas</th><th class="n">Días</th><th class="n">Und</th><th class="n">Impactos</th><th class="n">Jornada prom.</th></tr>'+
+    D.porAsesor.map(function(g){ return '<tr class="click" data-asesor="'+esc(g.clave)+'"><td><b>'+esc(g.nombre)+'</b></td><td class="n">'+g.visitas+'</td><td class="n">'+g.dias+'</td><td class="n"><b>'+g.unidades+'</b></td><td class="n">'+g.impactos+'</td><td class="n">'+(g.promedioMin!=null?dur(g.promedioMin):'—')+'</td></tr>'; }).join('')+'</table></div></div>';
+  h += '<div class="bloque"><h3>Puntos de venta</h3><div class="tabla"><table><tr><th>PDV</th><th>Ciudad</th><th class="n">Visitas</th><th class="n">Und</th><th>Última</th></tr>'+
+    D.porPdv.map(function(g){ return '<tr class="click" data-pdv="'+esc(g.clave)+'"><td><b>'+esc(g.clave)+'</b></td><td>'+esc(g.ciudad)+'</td><td class="n">'+g.visitas+'</td><td class="n"><b>'+g.unidades+'</b></td><td>'+fechaCorta(g.ultima.slice(0,10))+'</td></tr>'; }).join('')+'</table></div></div>';
+  if(D.motivosNoVenta.length) h += '<div class="bloque"><h3>Motivos de no venta</h3>'+barras(D.motivosNoVenta,'veces','',false)+'</div>';
+  $('ranking').innerHTML = h;
+}
+function pintarTendencia(){
+  if(D.porDia.length < 2){ $('tendencia').innerHTML = '<div class="vacio">La tendencia se ve con un rango de varios días. Elige "Últimos 7 días" o "Este mes".</div>'; return; }
+  var graf = function(campo, titulo){ var max = Math.max.apply(null, D.porDia.map(function(g){ return g[campo]; }).concat([1]));
+    return '<div class="bloque"><h3>'+titulo+'</h3><div class="dias">'+D.porDia.map(function(g){ return '<div class="dia"><i style="height:'+Math.max(2,Math.round(g[campo]/max*100))+'%"><em>'+g[campo]+'</em></i><span>'+fechaCorta(g.clave).replace(/\.$/,'')+'</span></div>'; }).join('')+'</div></div>'; };
+  $('tendencia').innerHTML = graf('unidades','Unidades vendidas por día') + graf('visitas','Visitas por día') + graf('impactos','Impactos por día');
+}
+function pintarPerfil(){
+  var el = $('perfil');
+  if(!F.asesor && !F.pdv){ el.classList.remove('on'); return; }
+  var k = D.kpis, titulo, sub, foto = '';
+  if(F.asesor){
+    var a = D.opciones.asesores.filter(function(x){ return x.clave===F.asesor; })[0] || {nombre:F.asesor};
+    var g = D.porAsesor[0] || {};
+    var conFoto = D.visitas.filter(function(v){ return v.fotoIngreso; })[0];
+    foto = conFoto ? '<img src="'+esc(conFoto.fotoIngreso)+'" alt="">' : '<div class="ini">'+iniciales(a.nombre)+'</div>';
+    titulo = a.nombre; sub = (a.documento?'Documento '+a.documento+' · ':'') + 'último reporte ' + fechaCorta(a.ultimo);
+    el.innerHTML = '<div class="perfil-h">'+foto+'<div><b>'+esc(titulo)+'</b><span>'+esc(sub)+'</span></div><button class="perfil-x" data-limpia="asesor">Quitar ✕</button></div>'+
+      '<div class="perfil-m"><div><b>'+k.visitas+'</b><span>visitas</span></div><div><b>'+(g.dias||0)+'</b><span>días</span></div><div><b>'+(g.pdvs||0)+'</b><span>PDV</span></div><div><b>'+k.unidades+'</b><span>unidades</span></div><div><b>'+k.impactos+'</b><span>impactos</span></div><div><b>'+(g.promedioMin!=null?dur(g.promedioMin):'—')+'</b><span>jornada prom.</span></div></div>';
+  } else {
+    var p = D.porPdv[0] || {asesores:[]};
+    el.innerHTML = '<div class="perfil-h"><div class="ini">📍</div><div><b>'+esc(F.pdv)+'</b><span>'+esc((D.opciones.pdvs.filter(function(x){ return x.pdv===F.pdv; })[0]||{}).ciudad||'')+(p.ultima?' · última visita '+fechaCorta(p.ultima.slice(0,10)):'')+'</span></div><button class="perfil-x" data-limpia="pdv">Quitar ✕</button></div>'+
+      '<div class="perfil-m"><div><b>'+k.visitas+'</b><span>visitas</span></div><div><b>'+(p.dias||0)+'</b><span>días</span></div><div><b>'+k.unidades+'</b><span>unidades</span></div><div><b>'+k.botellas+'</b><span>botellas</span></div><div><b>'+k.impactos+'</b><span>impactos</span></div><div><b>'+(p.asesores||[]).length+'</b><span>asesores</span></div></div>'+
+      ((p.asesores||[]).length ? '<div style="margin-top:8px;font-size:12.5px;color:var(--ink2)">Asesores: '+esc(p.asesores.join(', '))+'</div>' : '');
+  }
+  el.classList.add('on');
+}
+
+// ---------- MAPA ----------
+function pintarMapa(){
+  if(!window.L){ $('mapa').innerHTML = '<div class="vacio">No se pudo cargar el mapa.</div>'; return; }
+  if(!mapa){ mapa = L.map('mapa',{zoomControl:true}).setView([4.65,-74.08], 6); L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'© OpenStreetMap'}).addTo(mapa); }
+  if(capa) capa.remove();
+  capa = L.layerGroup().addTo(mapa);
+  var pts = [];
+  D.visitas.forEach(function(v, i){
+    if(v.lat==null || v.lng==null) return;
+    pts.push([v.lat, v.lng]);
+    var color = v.estado==='en_pdv' ? '#18a957' : '#7B1E4B';
+    L.circleMarker([v.lat, v.lng],{radius:9,color:'#fff',weight:2,fillColor:color,fillOpacity:.95}).addTo(capa)
+      .bindPopup((v.fotoIngreso?'<img src="'+esc(v.fotoIngreso)+'">':'')+'<b>'+esc(v.asesor)+'</b><br>'+esc(v.pdv)+'<br>Ingreso '+hora(v.ingreso)+(v.salida?' · Salida '+hora(v.salida):'')+'<br>'+v.unidades+' und · '+v.impactos+' impactos<br><a href="#" data-i="'+i+'" class="ver-det">Ver detalle</a>');
+  });
+  setTimeout(function(){ mapa.invalidateSize(); if(pts.length) mapa.fitBounds(pts,{padding:[30,30],maxZoom:15}); }, 60);
+}
+
+// ---------- DETALLE ----------
+function abrirDetalle(v){
+  var mapaMini = v.lat!=null ? '<iframe class="mapa-mini" loading="lazy" src="https://www.openstreetmap.org/export/embed.html?bbox='+(v.lng-0.004)+','+(v.lat-0.003)+','+(v.lng+0.004)+','+(v.lat+0.003)+'&layer=mapnik&marker='+v.lat+','+v.lng+'"></iframe><div class="lin"><span>Coordenadas</span><b><a href="https://www.google.com/maps?q='+v.lat+','+v.lng+'" target="_blank">'+v.lat.toFixed(5)+', '+v.lng.toFixed(5)+' ↗</a></b></div>'+(v.precision?'<div class="lin"><span>Precisión GPS</span><b>'+esc(v.precision)+' m</b></div>':'') : '<div class="vacio" style="padding:14px">Sin ubicación registrada</div>';
+  var mods = ['ingreso','ventas','degustaciones','premios','voz','competencia','salida'], nom = {ingreso:'Ingreso',ventas:'Ventas',degustaciones:'Degustación',premios:'Obsequios',voz:'Voz consumidor',competencia:'Competencia',salida:'Salida'};
+  var lista = function(items, f){ return items.length ? items.map(f).join('') : '<div class="lin"><span>Sin registros</span></div>'; };
+  var html = '<div class="hoja-top">'+(v.fotoIngreso?'<img class="ava" src="'+esc(v.fotoIngreso)+'" alt="">':'<div class="ava">'+iniciales(v.asesor)+'</div>')+'<div><b>'+esc(v.asesor)+'</b><span>'+esc(v.pdv)+' · '+esc(v.ciudad)+' · '+fechaCorta(v.dia)+'</span></div><button class="ibtn cerrar" style="color:var(--vino);border-color:var(--line)" data-cerrar="1">✕</button></div>'+
+  '<div class="hoja-c">'+
+    '<button type="button" class="rep-btn" data-repgestion="1">📄 Reporte PDF de esta gestión</button>'+
+    '<div class="fotos"><figure>'+(v.fotoIngreso?'<img src="'+esc(v.fotoIngreso)+'" data-zoom="'+esc(v.fotoIngreso)+'" data-titulo="Ingreso · '+esc(v.asesor)+'" alt="">':'<div class="sinfoto">Sin foto</div>')+'<figcaption>🟢 Ingreso <b>'+hora(v.ingreso)+'</b></figcaption></figure>'+
+    '<figure>'+(v.fotoSalida?'<img src="'+esc(v.fotoSalida)+'" data-zoom="'+esc(v.fotoSalida)+'" data-titulo="Salida · '+esc(v.asesor)+'" alt="">':'<div class="sinfoto">'+(v.estado==='en_pdv'?'Aún en el punto':'Sin foto de salida')+'</div>')+'<figcaption>🔴 Salida <b>'+(v.salida?hora(v.salida):'—')+'</b>'+(v.minutos!=null?' · '+dur(v.minutos):'')+'</figcaption></figure></div>'+
+    '<div class="sec"><h4>Módulos reportados</h4><div class="mods">'+mods.map(function(m){ return '<span class="mod '+(v.modulos.indexOf(m)>=0?'ok':'')+'">'+(v.modulos.indexOf(m)>=0?'✓ ':'')+nom[m]+'</span>'; }).join('')+'</div></div>'+
+    '<div class="sec"><h4>Ubicación</h4>'+mapaMini+'</div>'+
+    '<div class="sec"><h4>Ventas · '+v.unidades+' unidades</h4>'+(v.venta==='No'?'<div class="lin"><span>Sin venta</span><b>'+esc(v.motivoNoVenta)+'</b></div>':'')+lista(v.productos, function(p){ var im=imgVino(p.producto); return '<div class="lin" style="align-items:center"><span style="display:flex;align-items:center;gap:8px">'+(im?'<img src="'+im+'" data-zoom="'+im+'" data-titulo="'+esc(p.producto)+'" style="width:34px;height:34px;object-fit:contain;mix-blend-mode:multiply;cursor:zoom-in">':'')+esc(p.producto)+'</span><b>'+p.cantidad+' und</b></div>'; })+'</div>'+
+    '<div class="sec"><h4>Degustación · '+v.botellas+' botellas · '+v.impactos+' impactos</h4>'+(v.degustacion==='No'?'<div class="lin"><span>No hubo</span><b>'+esc(v.motivoNoDegustacion)+'</b></div>':'')+lista(v.degustados, function(p){ return '<div class="lin"><span>'+esc(p.producto)+'</span><b>'+p.botellas+' bot</b></div>'; })+'</div>'+
+    '<div class="sec"><h4>Obsequios · '+v.obsequiosTotal+'</h4>'+lista(v.obsequios, function(p){ return '<div class="lin"><span>'+esc(p.producto)+'</span><b>'+p.cantidad+'</b></div>'; })+'</div>'+
+    '<div class="sec"><h4>Voz del consumidor · '+v.voz.length+'</h4>'+lista(v.voz, function(c, i){ return '<div class="lin"><span>#'+(i+1)+' '+esc([c.vino, c.ocasion, c.edad].filter(Boolean).join(' · '))+'</span><b>'+(c.opinion?'★'.repeat(c.opinion):'')+' '+esc(c.percepcion)+'</b></div>'+(c.comentario?'<div style="font-size:12px;color:var(--ink2);padding:0 0 6px">“'+esc(c.comentario)+'”</div>':''); })+'</div>'+
+    '<div class="sec"><h4>Competencia · '+(v.competencia||'—')+'</h4>'+lista(v.evidencias, function(e){ return '<div class="evid">'+(e.foto?'<img src="'+esc(e.foto)+'" data-zoom="'+esc(e.foto)+'" data-titulo="'+esc(e.marca||e.tipo)+'">':'')+'<div><b>'+esc(e.tipo)+'</b> '+esc(e.marca)+'<div style="font-size:12px;color:var(--ink2)">'+esc(e.descripcion)+'</div></div></div>'; })+'</div>'+
+    '<div class="sec"><h4>Cierre</h4><div class="lin"><span>Observaciones</span><b>'+esc(v.observaciones||'—')+'</b></div><div class="lin"><span>Próxima visita</span><b>'+esc(v.proximaVisita||'—')+'</b></div><div class="lin"><span>Código</span><b>'+esc(v.id)+'</b></div><div class="lin"><span>Dispositivo</span><b>'+esc(v.dispositivo||'—')+'</b></div></div>'+
+  '</div>';
+  visitaAbierta = v;
+  $('hoja').innerHTML = html; $('hoja').scrollTop = 0;
+  $('hoja').classList.add('on'); $('hojaBd').classList.add('on');
+}
+function cerrarDetalle(){ $('hoja').classList.remove('on'); $('hojaBd').classList.remove('on'); }
+$('hojaBd').onclick = cerrarDetalle;
+
+// ---------- REPORTES PDF ----------
+function rLinea(t, v){ return '<div class="r-l"><b>'+t+':</b> '+v+'</div>'; }
+function rVisita(v, grande){
+  var prod = v.productos.length ? v.productos.map(function(p){ return esc(p.producto)+' ×'+p.cantidad; }).join(', ') : (v.venta==='No' ? 'Sin venta ('+esc(v.motivoNoVenta||'sin motivo')+')' : 'No reportó ventas');
+  var deg = v.degustados.length ? v.degustados.map(function(p){ return esc(p.producto)+' '+p.botellas+' bot'; }).join(', ') : (v.degustacion==='No' ? 'No hubo ('+esc(v.motivoNoDegustacion||'')+')' : '—');
+  var mods = ['ingreso','ventas','degustaciones','premios','voz','competencia','salida'].map(function(m){ return (v.modulos.indexOf(m)>=0?'✓ ':'✗ ')+m; }).join(' · ');
+  var fotos = '<div class="r-fotos"><figure>'+(v.fotoIngreso?'<img src="'+esc(v.fotoIngreso)+'">':'<div style="height:92px;border:1px dashed #ccc;border-radius:5px"></div>')+'<figcaption>Ingreso '+hora(v.ingreso)+'</figcaption></figure>'+
+    '<figure>'+(v.fotoSalida?'<img src="'+esc(v.fotoSalida)+'">':'<div style="height:92px;border:1px dashed #ccc;border-radius:5px"></div>')+'<figcaption>Salida '+(v.salida?hora(v.salida):'—')+'</figcaption></figure></div>';
+  return '<div class="r-vis"><div><h3>'+esc(v.asesor)+' · '+esc(v.pdv)+'</h3>'+
+    rLinea('Fecha', fechaCorta(v.dia)+' · '+esc(v.ciudad))+
+    rLinea('Jornada', 'ingreso '+hora(v.ingreso)+' · salida '+(v.salida?hora(v.salida):'sigue en el punto')+(v.minutos!=null?' ('+dur(v.minutos)+')':''))+
+    rLinea('Ventas ('+v.unidades+' und)', prod)+
+    rLinea('Degustación', deg+' · '+v.impactos+' impactos')+
+    rLinea('Obsequios', v.obsequiosTotal+(v.obsequios.length?' ('+v.obsequios.map(function(o){ return esc(o.producto)+' '+o.cantidad; }).join(', ')+')':''))+
+    rLinea('Voz del consumidor', v.voz.length+' encuestas'+(grande && v.voz.length ? ': '+v.voz.map(function(c){ return esc([c.vino,c.percepcion,c.comentario].filter(Boolean).join(' / ')); }).join(' | ') : ''))+
+    rLinea('Competencia', esc(v.competencia||'—')+(v.evidencias.length?' ('+v.evidencias.map(function(e){ return esc([e.tipo,e.marca,e.descripcion].filter(Boolean).join(' ')); }).join('; ')+')':''))+
+    (v.lat!=null ? rLinea('Ubicación', v.lat.toFixed(5)+', '+v.lng.toFixed(5)+(v.precision?' (±'+esc(v.precision)+' m)':'')) : '')+
+    (v.observaciones ? rLinea('Observaciones', esc(v.observaciones)) : '')+
+    rLinea('Módulos', mods)+rLinea('Código', esc(v.id))+
+    '</div>'+fotos+'</div>';
+}
+function rEncabezado(titulo, sub){
+  var ahora = new Date().toLocaleString('es-CO',{timeZone:'America/Bogota',dateStyle:'medium',timeStyle:'short'});
+  return '<div class="r-head"><h1>MEICO<small>REPORTE DE GESTIÓN EN PDV</small></h1><div class="r-meta">Generado '+ahora+'<br>Dashboard de supervisores</div></div>'+
+    '<div class="r-tit">'+titulo+'</div><div class="r-sub">'+sub+'</div>';
+}
+function imprimir(html, nombre){
+  var r = $('reporte'); r.innerHTML = html + '<div class="r-pie">Meico · Informe generado desde el dashboard de supervisores · Synaptic</div>';
+  var t0 = document.title; document.title = nombre;
+  var imgs = Array.prototype.slice.call(r.querySelectorAll('img'));
+  Promise.all(imgs.map(function(im){ return im.complete ? 1 : new Promise(function(ok){ im.onload = im.onerror = ok; setTimeout(ok, 6000); }); }))
+    .then(function(){ setTimeout(function(){ window.print(); setTimeout(function(){ document.title = t0; }, 800); }, 150); });
+}
+function reporteGrupo(){
+  if(!D) return;
+  var k = D.kpis, persona = F.asesor ? (D.opciones.asesores.filter(function(x){ return x.clave===F.asesor; })[0] || {nombre:F.asesor}) : null;
+  var titulo = persona ? 'Reporte de ' + esc(persona.nombre) + (persona.documento ? ' · Doc ' + esc(persona.documento) : '') : (F.pdv ? 'Reporte del PDV ' + esc(F.pdv) : 'Reporte del equipo' + (F.ciudad ? ' · ' + esc(F.ciudad) : ''));
+  var h = rEncabezado(titulo, 'Filtros: ' + esc($('segRes').textContent) + ' · ' + D.totalVisitas + ' gestiones');
+  h += '<div class="r-kpis">' + [['Visitas',k.visitas],['Asesores',k.asesores],['Unidades',k.unidades],['Botellas degust.',k.botellas],['Impactos',k.impactos],
+    ['Obsequios',k.obsequios],['Encuestas',k.encuestas],['Conversión',k.conversion+'%'],['PDV visitados',k.pdvVisitados+'/'+k.pdvTotal],['Jornadas cerradas',k.cerradas]]
+    .map(function(x){ return '<div><b>'+x[1]+'</b><span>'+x[0]+'</span></div>'; }).join('') + '</div>';
+  if(!persona && D.porAsesor.length){
+    h += '<div class="r-h2">Resultados por asesor</div><table><tr><th>Asesor</th><th>Documento</th><th class="n">Visitas</th><th class="n">Días</th><th class="n">Unidades</th><th class="n">Botellas</th><th class="n">Impactos</th><th class="n">Jornada prom.</th></tr>' +
+      D.porAsesor.map(function(g){ return '<tr><td>'+esc(g.nombre)+'</td><td>'+esc(g.documento)+'</td><td class="n">'+g.visitas+'</td><td class="n">'+g.dias+'</td><td class="n"><b>'+g.unidades+'</b></td><td class="n">'+g.botellas+'</td><td class="n">'+g.impactos+'</td><td class="n">'+(g.promedioMin!=null?dur(g.promedioMin):'—')+'</td></tr>'; }).join('') + '</table>';
+  }
+  if(D.ventasPorVino.length) h += '<div class="r-h2">Ventas por vino</div><table><tr><th>Vino</th><th class="n">Unidades</th></tr>' + D.ventasPorVino.map(function(x){ return '<tr><td>'+esc(x.vino)+'</td><td class="n"><b>'+x.unidades+'</b></td></tr>'; }).join('') + '</table>';
+  if(D.porPdv.length > 1) h += '<div class="r-h2">Por punto de venta</div><table><tr><th>PDV</th><th>Ciudad</th><th class="n">Visitas</th><th class="n">Unidades</th><th class="n">Impactos</th></tr>' + D.porPdv.map(function(g){ return '<tr><td>'+esc(g.clave)+'</td><td>'+esc(g.ciudad)+'</td><td class="n">'+g.visitas+'</td><td class="n">'+g.unidades+'</td><td class="n">'+g.impactos+'</td></tr>'; }).join('') + '</table>';
+  if(D.desde===D.hasta && D.sinReporte.length) h += '<div class="r-h2">Sin reporte este día</div><table><tr><th>Asesor</th><th>Último reporte</th><th>Último PDV</th></tr>' + D.sinReporte.map(function(s){ return '<tr><td>'+esc(s.asesor)+'</td><td>'+fechaCorta(s.ultimoDia)+'</td><td>'+esc(s.ultimoPdv)+'</td></tr>'; }).join('') + '</table>';
+  if(D.motivosNoVenta.length) h += '<div class="r-h2">Motivos de no venta</div><table>' + D.motivosNoVenta.map(function(x){ return '<tr><td>'+esc(x.motivo)+'</td><td class="n">'+x.veces+'</td></tr>'; }).join('') + '</table>';
+  h += '<div class="r-h2">Detalle de gestiones' + (D.visitas.length < D.totalVisitas ? ' (primeras ' + D.visitas.length + ' de ' + D.totalVisitas + ')' : '') + '</div>';
+  h += D.visitas.map(function(v){ return rVisita(v, !!persona); }).join('') || '<p>Sin gestiones con estos filtros.</p>';
+  var nombre = 'Reporte Meico ' + (persona ? persona.nombre : (F.pdv || F.ciudad || 'equipo')) + ' ' + D.desde + (D.hasta!==D.desde ? ' a ' + D.hasta : '');
+  imprimir(h, nombre);
+}
+function reporteGestion(v){
+  var h = '<div class="r-gest">' + rEncabezado('Gestión ' + esc(v.id), esc(v.asesor) + (v.documento ? ' · Doc ' + esc(v.documento) : '') + ' · ' + esc(v.pdv) + ' · ' + fechaCorta(v.dia)) + rVisita(v, true) + '</div>';
+  imprimir(h, 'Gestion ' + v.id);
+}
+$('btnRepGrupo').onclick = reporteGrupo;
+$('btnCodigo').onclick = function(){
+  var c = $('fCodigo').value.trim(); $('codErr').textContent = '';
+  if(!c){ $('codErr').textContent = 'Escribe el código (empieza por MNV-).'; return; }
+  this.textContent = 'Buscando…'; var b = this;
+  server('gestion', pin, c).then(function(r){ b.textContent = 'Buscar';
+    if(r && r.success){ abrirDetalle(r.visita); } else { $('codErr').textContent = (r && r.error) || 'No se encontró.'; }
+  }).catch(function(){ b.textContent = 'Buscar'; $('codErr').textContent = 'Sin conexión.'; });
+};
+$('fCodigo').addEventListener('keydown', function(e){ if(e.key==='Enter') $('btnCodigo').click(); });
+
+// ---------- CLICS GLOBALES ----------
+document.addEventListener('click', function(e){
+  var t = e.target;
+  var z = t.closest && t.closest('[data-zoom]'); if(z){ abrirZoom(z.getAttribute('data-zoom'), z.getAttribute('data-titulo')); return; }
+  if(t.closest && t.closest('[data-cerrar]')){ cerrarDetalle(); return; }
+  if(t.closest && t.closest('[data-repgestion]')){ if(visitaAbierta) reporteGestion(visitaAbierta); return; }
+  var vd = t.closest && t.closest('.ver-det'); if(vd){ e.preventDefault(); abrirDetalle(D.visitas[+vd.getAttribute('data-i')]); return; }
+  var c = t.closest && t.closest('#lista .card'); if(c){ abrirDetalle(D.visitas[+c.getAttribute('data-i')]); return; }
+  var a = t.closest && t.closest('[data-asesor]'); if(a){ F.asesor = a.getAttribute('data-asesor'); F.pdv=''; if(D.desde===D.hasta && tabActual==='sin'){ aplicarPreset('30'); vista='hist'; } irTab('equipo'); llenarOpciones(); cargar(); window.scrollTo({top:0,behavior:'smooth'}); return; }
+  var p = t.closest && t.closest('[data-pdv]'); if(p){ F.pdv = p.getAttribute('data-pdv'); F.asesor=''; irTab('equipo'); llenarOpciones(); cargar(); window.scrollTo({top:0,behavior:'smooth'}); return; }
+  var l = t.closest && t.closest('[data-limpia]'); if(l){ F[l.getAttribute('data-limpia')] = ''; llenarOpciones(); cargar(); return; }
+});
+function irTab(t){ tabActual = t; Array.prototype.forEach.call(document.querySelectorAll('.tab'), function(b){ b.classList.toggle('on', b.getAttribute('data-t')===t); }); Array.prototype.forEach.call(document.querySelectorAll('.panel'), function(p){ p.classList.toggle('on', p.getAttribute('data-p')===t); }); if(t==='mapa' && D) pintarMapa(); }
+$('tabs').onclick = function(e){ var b = e.target.closest('.tab'); if(b) irTab(b.getAttribute('data-t')); };
+
+// ---------- ZOOM ----------
+var esc_ = 1, tx = 0, ty = 0, ptrs = new Map(), d0 = 0, e0 = 1, arr = null, ult = 0;
+function zp(){ esc_ = Math.min(5, Math.max(1, esc_)); if(esc_===1){ tx=0; ty=0; } $('zoomI').style.transform = 'translate('+tx+'px,'+ty+'px) scale('+esc_+')'; }
+function abrirZoom(src, t){ $('zoomI').src = src; $('zoomT').textContent = t||''; esc_=1; zp(); $('zoom').classList.add('on'); }
+$('zoomX').onclick = function(){ $('zoom').classList.remove('on'); };
+document.querySelector('.zoom-b').onclick = function(e){ var d = e.target.getAttribute('data-z'); if(d===null) return; if(d==='0') esc_=1; else esc_ += (+d)*0.6; zp(); };
+var za = $('zoomA');
+za.addEventListener('pointerdown', function(e){ za.setPointerCapture(e.pointerId); ptrs.set(e.pointerId,{x:e.clientX,y:e.clientY}); if(ptrs.size===2){ var p=Array.from(ptrs.values()); d0=Math.hypot(p[0].x-p[1].x,p[0].y-p[1].y); e0=esc_; } else { arr={x:e.clientX-tx,y:e.clientY-ty}; var n=Date.now(); if(n-ult<300){ esc_ = esc_>1?1:2.5; zp(); } ult=n; } });
+za.addEventListener('pointermove', function(e){ if(!ptrs.has(e.pointerId)) return; ptrs.set(e.pointerId,{x:e.clientX,y:e.clientY}); if(ptrs.size===2){ var p=Array.from(ptrs.values()); var d=Math.hypot(p[0].x-p[1].x,p[0].y-p[1].y); if(d0){ esc_=e0*d/d0; zp(); } } else if(arr && esc_>1){ tx=e.clientX-arr.x; ty=e.clientY-arr.y; zp(); } });
+['pointerup','pointercancel'].forEach(function(ev){ za.addEventListener(ev, function(e){ ptrs.delete(e.pointerId); if(ptrs.size<2) d0=0; if(!ptrs.size) arr=null; }); });
+za.addEventListener('wheel', function(e){ e.preventDefault(); esc_ += e.deltaY<0?0.25:-0.25; zp(); }, {passive:false});
+
+// ---------- ARIA ----------
+var hist = [], enviando = false, vozOn = true;
+function decir(t){
+  if(!vozOn || !('speechSynthesis' in window)) return;
+  try{
+    speechSynthesis.cancel();
+    var vs = speechSynthesis.getVoices().filter(function(v){ return /^es/i.test(v.lang); });
+    var pref = vs.filter(function(v){ return /natural|neural|online|premium|enhanced|google|paulina|m[oó]nica|sabina/i.test(v.name); })[0] || vs.filter(function(v){ return /es-(co|mx|us|419)/i.test(v.lang); })[0] || vs[0];
+    var limpio = String(t).replace(/[\u{1F000}-\u{1FAFF}\u{2600}-\u{27BF}\u{2B00}-\u{2BFF}\u{2190}-\u{21FF}\u{FE0F}\u{200D}]/gu,'').replace(/\bPDV\b/g,'punto de venta').replace(/[*_#`"«»•·|]/g,' ').replace(/\s*\n+\s*/g,'. ');
+    (limpio.match(/[^.!?;:]+[.!?;:]*/g) || [limpio]).forEach(function(fr){ fr = fr.trim(); if(!fr) return; var u = new SpeechSynthesisUtterance(fr); if(pref){ u.voice = pref; u.lang = pref.lang; } else u.lang = 'es-CO'; u.rate = 1; speechSynthesis.speak(u); });
+  }catch(e){}
+}
+function msg(t, quien){ var d = document.createElement('div'); d.className = 'm ' + quien; d.textContent = t; $('ariaLog').appendChild(d); $('ariaLog').scrollTop = $('ariaLog').scrollHeight; return d; }
+function preguntar(q){
+  q = (q||'').trim(); if(!q || enviando) return;
+  enviando = true; msg(q, 'u'); var p = msg('Analizando los datos…', 'a');
+  server('aria', pin, q, hist.slice(-6), F).then(function(r){
+    enviando = false;
+    var t = r && r.respuesta ? r.respuesta : (r && r.error ? r.error : 'No pude responder.');
+    p.textContent = t;
+    if(r && r.respuesta){
+      hist.push({role:'user',content:q},{role:'assistant',content:t.slice(0,900)}); hist = hist.slice(-6);
+      var b = document.createElement('button'); b.className = 'copiar'; b.textContent = '📋 Copiar';
+      b.onclick = function(){ (navigator.clipboard ? navigator.clipboard.writeText(t) : Promise.reject()).then(function(){ b.textContent='✓ Copiado'; }).catch(function(){ b.textContent='No se pudo copiar'; }); };
+      p.appendChild(b); decir(t);
+    }
+    $('ariaLog').scrollTop = $('ariaLog').scrollHeight;
+  }).catch(function(){ enviando = false; p.textContent = 'Sin conexión con ARIA. Intenta de nuevo.'; });
+}
+$('ariaBtn').onclick = function(){ $('aria').classList.add('on'); $('ariaCtx').textContent = 'Filtros: ' + $('segRes').textContent; setTimeout(function(){ $('ariaIn').focus(); }, 150); };
+$('ariaX').onclick = function(){ $('aria').classList.remove('on'); try{ speechSynthesis.cancel(); }catch(e){} };
+$('ariaEnv').onclick = function(){ var t = $('ariaIn').value; $('ariaIn').value = ''; preguntar(t); };
+$('ariaIn').addEventListener('keydown', function(e){ if(e.key==='Enter'){ e.preventDefault(); $('ariaEnv').click(); } });
+$('ariaSug').onclick = function(e){ var b = e.target.closest('button'); if(b) preguntar(b.getAttribute('data-q')); };
+$('ariaVoz').onclick = function(){ vozOn = !vozOn; this.textContent = vozOn ? '🔊' : '🔇'; if(!vozOn) try{ speechSynthesis.cancel(); }catch(e){} };
+var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+if(SR){ var rec = new SR(); rec.lang='es-CO'; rec.interimResults=false; var esc2=false;
+  rec.onresult = function(ev){ preguntar(ev.results[0][0].transcript); };
+  rec.onend = function(){ esc2=false; $('ariaMic').classList.remove('on'); };
+  $('ariaMic').onclick = function(){ if(esc2){ rec.stop(); return; } try{ rec.start(); esc2=true; $('ariaMic').classList.add('on'); }catch(e){} };
+} else { $('ariaMic').style.display = 'none'; }
+
+// ---------- INICIO ----------
+aplicarPreset('hoy'); sincronizarCampos();
+var guardado = ''; try{ guardado = localStorage.getItem(LS_PIN) || ''; }catch(e){}
+if(/PEGA_AQUI/.test(DASH_URL)){ $('pinErr').textContent = 'Falta conectar el dashboard: despliega el Apps Script del Sheet de resultados y pega su URL /exec.'; }
+else if(guardado) entrar(guardado); else setTimeout(function(){ $('pinInput').focus(); }, 300);
+})();
+</script>
+</body>
+</html>

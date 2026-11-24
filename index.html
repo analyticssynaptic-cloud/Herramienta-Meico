@@ -965,6 +965,7 @@ function aplicarRespuestaEnviada(payload, data, desdeCola){
   if (!data) return;
   if (data.registroId && data.registroId === registroId) {
     const g = (payload && payload.gestion) || {};
+    if (data.asesorNombre && data.asesorNombre !== getAsesorNombre()) { const el = document.getElementById('asesorNombreTexto'); if (el) el.value = data.asesorNombre; asesorSel.nombre = data.asesorNombre; onIdentChange(); }
     if (data.fotoIngresoURL) { fotoIngresoURL = data.fotoIngresoURL; if (fotoIngreso === g.fotoIngreso) fotoIngreso = ''; }
     if (data.fotoSalidaURL) { fotoSalidaURL = data.fotoSalidaURL; if (fotoSalida === g.fotoSalida) fotoSalida = ''; }
     persistir(); persistirFotos();
