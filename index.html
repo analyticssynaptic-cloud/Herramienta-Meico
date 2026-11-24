@@ -160,9 +160,9 @@
   .modgrid-check svg{width:10px;height:10px}
 
   /* HOJA DE SELECCIÓN DE PRODUCTO (buscador) */
-  .combosheet-bd{position:fixed;inset:0;background:rgba(38,21,27,.55);opacity:0;pointer-events:none;transition:opacity .25s;z-index:70}
+  .combosheet-bd{position:fixed;inset:0;background:rgba(38,21,27,.55);opacity:0;pointer-events:none;transition:opacity .25s;z-index:9590}
   .combosheet-bd.open{opacity:1;pointer-events:auto}
-  .combosheet{position:fixed;left:0;right:0;bottom:0;z-index:72;background:#fff;border-radius:24px 24px 0 0;padding:18px 18px max(18px,env(safe-area-inset-bottom));max-width:720px;margin:0 auto;box-shadow:0 -10px 40px -10px rgba(0,0,0,.3);transform:translateY(105%);transition:transform .3s cubic-bezier(.34,1.56,.64,1);display:flex;flex-direction:column;max-height:78vh}
+  .combosheet{position:fixed;left:0;right:0;bottom:0;z-index:9600;background:#fff;border-radius:24px 24px 0 0;padding:18px 18px max(18px,env(safe-area-inset-bottom));max-width:720px;margin:0 auto;box-shadow:0 -10px 40px -10px rgba(0,0,0,.3);transform:translateY(105%);transition:transform .3s cubic-bezier(.34,1.56,.64,1);display:flex;flex-direction:column;max-height:78vh}
   .combosheet.open{transform:translateY(0)}
   .combosheet-h{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-shrink:0}
   .combosheet-h b{font-family:'Poppins';font-size:15px;font-weight:600}
@@ -282,6 +282,18 @@
   .vino-ficha-t span{display:block;font-size:12.5px;color:var(--brand);font-weight:600;margin-top:3px}
   .vino-ficha-t em{display:block;font-style:normal;font-size:11.5px;color:var(--ink-soft);margin-top:1px}
   .combo-item{display:flex;align-items:center;gap:12px}
+  .zoomable{cursor:zoom-in}
+  .btn-speech{margin-top:7px;border:0;border-radius:20px;padding:6px 11px;font-size:12px;font-weight:700;color:#fff;background:linear-gradient(135deg,#7B1E4B,#4A0F2D);cursor:pointer}
+  .zoom-vino{position:fixed;inset:0;z-index:9800;background:#14060C;display:none;flex-direction:column}
+  .zoom-vino.open{display:flex}
+  .zoom-top{display:flex;align-items:center;gap:10px;padding:max(14px,env(safe-area-inset-top)) 16px 10px;color:#fff}
+  .zoom-t{flex:1;font-family:'Playfair Display',Georgia,serif;font-size:17px}
+  .zoom-x{border:0;background:rgba(255,255,255,.14);color:#fff;width:40px;height:40px;border-radius:50%;font-size:18px;cursor:pointer}
+  .zoom-area{flex:1;overflow:hidden;display:flex;align-items:center;justify-content:center;touch-action:none}
+  .zoom-area img{max-width:92%;max-height:100%;background:#fff;border-radius:18px;transition:transform .08s linear;user-select:none;-webkit-user-drag:none}
+  .zoom-ctl{display:flex;justify-content:center;gap:10px;padding:12px 16px max(16px,env(safe-area-inset-bottom))}
+  .zoom-ctl button{min-width:56px;height:46px;border-radius:23px;border:1px solid rgba(201,162,74,.6);background:rgba(255,255,255,.08);color:#fff;font-size:20px;font-weight:700;cursor:pointer}
+  .zoom-ctl button[data-z="0"]{font-size:14px;padding:0 16px}
   .combo-img{width:44px;height:44px;object-fit:contain;mix-blend-mode:multiply;flex-shrink:0;background:#fff;border-radius:10px}
   .card{border:1px solid rgba(201,162,74,.14)}
 </style>
@@ -1052,11 +1064,38 @@ function idVino(nombre){
   return '';
 }
 function imgVino(nombre){ const id=idVino(nombre); return id ? 'productos/'+id+'.jpg' : ''; }
+// Visor con zoom: toque para abrir, pellizco o doble toque para ampliar, arrastrar para mover
+function abrirZoom(src, titulo){
+  if(!src) return;
+  let z=document.getElementById('zoomVino');
+  if(!z){
+    z=document.createElement('div'); z.id='zoomVino'; z.className='zoom-vino';
+    z.innerHTML='<div class="zoom-top"><b class="zoom-t"></b><button type="button" class="zoom-x" aria-label="Cerrar">✕</button></div><div class="zoom-area"><img alt=""></div><div class="zoom-ctl"><button type="button" data-z="-1" aria-label="Alejar">−</button><button type="button" data-z="0">Ajustar</button><button type="button" data-z="1" aria-label="Acercar">+</button></div>';
+    document.body.appendChild(z);
+    const img=z.querySelector('img'), area=z.querySelector('.zoom-area');
+    let esc=1, tx=0, ty=0, ptrs=new Map(), dist0=0, esc0=1, ult=0, arr=null;
+    const pintar=()=>{ esc=Math.min(5,Math.max(1,esc)); if(esc===1){tx=0;ty=0;} img.style.transform='translate('+tx+'px,'+ty+'px) scale('+esc+')'; };
+    z._reset=()=>{ esc=1; tx=0; ty=0; pintar(); };
+    z.querySelector('.zoom-x').onclick=()=>{ z.classList.remove('open'); };
+    z.querySelector('.zoom-ctl').onclick=e=>{ const d=e.target.getAttribute('data-z'); if(d===null) return; if(d==='0'){ z._reset(); } else { esc+= (+d)*0.6; pintar(); } };
+    area.addEventListener('pointerdown',e=>{ area.setPointerCapture(e.pointerId); ptrs.set(e.pointerId,{x:e.clientX,y:e.clientY});
+      if(ptrs.size===2){ const p=[...ptrs.values()]; dist0=Math.hypot(p[0].x-p[1].x,p[0].y-p[1].y); esc0=esc; }
+      else { arr={x:e.clientX-tx,y:e.clientY-ty}; const ahora=Date.now(); if(ahora-ult<300){ esc = esc>1?1:2.5; pintar(); } ult=ahora; } });
+    area.addEventListener('pointermove',e=>{ if(!ptrs.has(e.pointerId)) return; ptrs.set(e.pointerId,{x:e.clientX,y:e.clientY});
+      if(ptrs.size===2){ const p=[...ptrs.values()]; const d=Math.hypot(p[0].x-p[1].x,p[0].y-p[1].y); if(dist0) { esc=esc0*d/dist0; pintar(); } }
+      else if(arr && esc>1){ tx=e.clientX-arr.x; ty=e.clientY-arr.y; pintar(); } });
+    const fin=e=>{ ptrs.delete(e.pointerId); if(ptrs.size<2) dist0=0; if(!ptrs.size) arr=null; };
+    area.addEventListener('pointerup',fin); area.addEventListener('pointercancel',fin);
+    area.addEventListener('wheel',e=>{ e.preventDefault(); esc+= e.deltaY<0?0.25:-0.25; pintar(); },{passive:false});
+  }
+  z.querySelector('img').src=src; z.querySelector('.zoom-t').textContent=titulo||''; z._reset(); z.classList.add('open');
+}
+window.abrirZoom = abrirZoom;
 function fichaVino(nombre){
   if(!nombre) return '';
   const id=idVino(nombre), d=VINOS[id]||{};
-  return '<div class="vino-ficha">'+(id?'<img src="productos/'+id+'.jpg" alt="" loading="lazy">':'<div class="vino-ficha-sin"><svg class="icon icon-lg"><use href="#i-wine"/></svg></div>')+
-    '<div class="vino-ficha-t"><b>'+escHtml(nombre)+'</b>'+(d.tipo?'<span>'+escHtml(d.tipo)+'</span>':'')+(d.origen?'<em>'+escHtml(d.linea)+' · '+escHtml(d.origen)+'</em>':'')+'</div></div>';
+  return '<div class="vino-ficha">'+(id?'<img src="productos/'+id+'.jpg" alt="Ver en grande" loading="lazy" class="zoomable" data-zoom="productos/'+id+'.jpg" data-titulo="'+escAttr(nombre)+'">':'<div class="vino-ficha-sin"><svg class="icon icon-lg"><use href="#i-wine"/></svg></div>')+
+    '<div class="vino-ficha-t"><b>'+escHtml(nombre)+'</b>'+(d.tipo?'<span>'+escHtml(d.tipo)+'</span>':'')+(d.origen?'<em>'+escHtml(d.linea)+' · '+escHtml(d.origen)+'</em>':'')+'<button type="button" class="btn-speech" data-vino="'+escAttr(nombre)+'">💬 Speech para vender</button></div></div>';
 }
 
 // ===== VOZ: elige la voz en español más natural del dispositivo y nunca lee emojis/íconos =====
@@ -1173,6 +1212,12 @@ document.addEventListener('DOMContentLoaded', () => {
     else if (e.target.closest('#btnSalir')) cerrarSesion();
   });
 
+  document.addEventListener('click', e => {
+    const z = e.target.closest && e.target.closest('.zoomable');
+    if (z) { abrirZoom(z.getAttribute('data-zoom') || z.src, z.getAttribute('data-titulo') || z.alt); return; }
+    const sp = e.target.closest && e.target.closest('.btn-speech');
+    if (sp && window.ariaSpeech) window.ariaSpeech(sp.getAttribute('data-vino'));
+  });
   document.getElementById('comboLista').addEventListener('click', e => {
     const item = e.target.closest('.combo-item'); if (!item) return;
     seleccionarCombo(item.dataset.value);
@@ -2465,7 +2510,7 @@ function escHtml(s){ return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&
   .aria-m.u{align-self:flex-end;background:#F7ECF0;border:1px solid #EBCFD9}
   .aria-m.a{align-self:flex-start;background:#F6F1F0}
   .aria-prod{align-self:flex-start;display:flex;gap:10px;max-width:92%;background:#fff;border:1px solid #EBDDE1;border-radius:14px;padding:8px;box-shadow:0 2px 8px rgba(0,0,0,.06)}
-  .aria-prod img{width:84px;height:84px;object-fit:contain;border-radius:10px;background:#FAF6F4;flex-shrink:0}
+  .aria-prod img{cursor:zoom-in;width:84px;height:84px;object-fit:contain;border-radius:10px;background:#FAF6F4;flex-shrink:0}
   .aria-prod-txt{font-size:13px;line-height:1.35;min-width:0}
   .aria-prod-txt b{display:block;font-size:13.5px}
   .aria-prod-txt span{display:block;color:#7A6669;font-size:11.5px;margin:1px 0 4px}
@@ -2495,7 +2540,12 @@ function escHtml(s){ return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&
   .aria-pts{display:flex;gap:4px;justify-content:center;margin:6px 0 0}
   .aria-pts i{width:7px;height:7px;border-radius:50%;background:#DCCBD0}
   .aria-pts i.on{background:#7B1E4B}
-  .aria-sug{display:flex;flex-wrap:wrap;gap:6px;margin:4px 0 8px}
+  .aria-sug{margin:4px 0 8px}
+  .aria-sug-t{font-size:10.5px;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:#A8875A;margin:6px 2px 4px}
+  .aria-sug-g{display:flex;gap:6px;overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:3px;scrollbar-width:none}
+  .aria-sug-g::-webkit-scrollbar{display:none}
+  .aria-sug-g button{flex-shrink:0;white-space:nowrap}
+  .aria-sug button.vta{background:linear-gradient(135deg,#7B1E4B,#4A0F2D);color:#fff;border-color:#7B1E4B}
   .aria-sug button{border:1px solid #DCCBD0;background:#fff;border-radius:16px;padding:6px 10px;font-size:12.5px;cursor:pointer;color:#26151B}
   .aria-row{display:flex;gap:8px;align-items:center}
   .aria-row input{flex:1;border:1.5px solid #DCCBD0;border-radius:12px;padding:12px;font-size:16px;min-height:44px;min-width:0}
@@ -2511,7 +2561,7 @@ function escHtml(s){ return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&
   <div class="aria-card">
     <div class="aria-head">
       <img src="aria.png" alt="">
-      <div class="aria-tit"><b>ARIA</b><span>Asistente de Meico</span></div>
+      <div class="aria-tit"><b>ARIA</b><span>Tu coach de ventas y soporte</span></div>
       <button class="aria-x" id="ariaCerrar" type="button">Cerrar</button>
     </div>
     <div class="aria-conectando on" id="ariaConectando">
@@ -2520,23 +2570,35 @@ function escHtml(s){ return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&
     </div>
     <div class="aria-chat" id="ariaChat">
       <div class="aria-log" id="ariaLog">
-        <div class="aria-m a">Hola, soy ARIA 🍷. Te ayudo con la herramienta, con cualquier error que tengas y con las preguntas que te hagan los clientes sobre nuestros vinos. Escribe o habla, o toca una guía animada para ver cómo se hace paso a paso.</div>
+        <div class="aria-m a">Hola, soy ARIA 🍷. Te ayudo a vender más: te armo speech para cada vino, respuestas a objeciones, ideas de venta cruzada y frases de cierre. También resuelvo errores de la app y preguntas de tus clientes. Puedes pedirme ajustes, por ejemplo: «hazlo más corto». Escribe o habla, o toca una guía animada para ver cómo se hace paso a paso.</div>
       </div>
       <div class="aria-sug" id="ariaSug">
-        <button type="button" data-g="completa">▶ Recorrido completo</button>
-        <button type="button" data-g="ingreso">▶ Ingresar al PDV</button>
-        <button type="button" data-g="venta">▶ Registrar venta</button>
-        <button type="button" data-g="degustacion">▶ Degustación</button>
-        <button type="button" data-g="premios">▶ Obsequios</button>
-        <button type="button" data-g="salida">▶ Salir del PDV</button>
-        <button type="button" data-q="Tengo un problema con la app, ¿qué reviso primero?">🛠️ Tengo un problema</button>
-        <button type="button" data-q="¿Qué vino le recomiendo a un cliente para una cena con carnes rojas?">🍷 Ayuda con un cliente</button>
-        <button type="button" data-tut="1">🎓 Tutorial hablado</button>
-        <button type="button" data-cat="1">🍷 Ver vinos</button>
+        <div class="aria-sug-t">Vender más</div>
+        <div class="aria-sug-g">
+          <button type="button" class="vta" data-speech="1">🎯 Speech de un vino</button>
+          <button type="button" class="vta" data-q="¿Cómo abordo a un cliente para invitarlo a la degustación sin ser invasivo?">👋 Abordar al cliente</button>
+          <button type="button" class="vta" data-q="Dame respuestas para las objeciones más comunes: está caro, no tomo vino, ya tengo en casa y solo estoy mirando.">🛡️ Objeciones</button>
+          <button type="button" class="vta" data-q="Dame un speech para venderle un vino de regalo a un cliente que no sabe qué escoger.">🎁 Para regalo</button>
+          <button type="button" class="vta" data-q="¿Cómo hago venta cruzada para que el cliente lleve más de una botella?">🔁 Venta cruzada</button>
+          <button type="button" class="vta" data-q="Dame frases para cerrar la venta después de la degustación.">🤝 Cierre</button>
+          <button type="button" class="vta" data-q="¿Qué vino le recomiendo a un cliente para una cena con carnes rojas?">🍽️ Maridaje</button>
+        </div>
+        <div class="aria-sug-t">Ayuda</div>
+        <div class="aria-sug-g">
+          <button type="button" data-q="Tengo un problema con la app, ¿qué reviso primero?">🛠️ Tengo un problema</button>
+          <button type="button" data-cat="1">🍷 Ver vinos</button>
+          <button type="button" data-g="completa">▶ Recorrido completo</button>
+          <button type="button" data-g="ingreso">▶ Ingreso</button>
+          <button type="button" data-g="venta">▶ Registrar venta</button>
+          <button type="button" data-g="degustacion">▶ Degustación</button>
+          <button type="button" data-g="premios">▶ Obsequios</button>
+          <button type="button" data-g="salida">▶ Salida</button>
+          <button type="button" data-tut="1">🎓 Tutorial hablado</button>
+        </div>
       </div>
       <div class="aria-row">
         <button class="aria-mic" id="ariaMic" type="button" aria-label="Hablar" title="Hablar">🎤</button>
-        <input id="ariaTexto" type="text" placeholder="Escribe tu pregunta…" maxlength="400" autocomplete="off">
+        <input id="ariaTexto" type="text" placeholder="Pide un speech, una objeción, ayuda…" maxlength="400" autocomplete="off">
         <button class="aria-send" id="ariaEnviar" type="button" aria-label="Enviar">➤</button>
         <button class="aria-voz" id="ariaVoz" type="button" aria-label="Activar o silenciar voz" title="Voz de respuesta">🔊</button>
       </div>
@@ -2549,7 +2611,7 @@ function escHtml(s){ return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&
   'use strict';
   // Endpoint: el mismo Apps Script de la app. La clave de Groq vive en el servidor, nunca aquí.
   var ARIA_URL = (typeof GAS_URL !== 'undefined') ? GAS_URL : '';
-  var vozActiva = true, enviando = false, conectada = false, timerConexion = null, guiaTimer = null;
+  var vozActiva = true, enviando = false, conectada = false, timerConexion = null, guiaTimer = null, historial = [];
   var $ = function(id){ return document.getElementById(id); };
   var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
   var TTS = window.speechSynthesis;
@@ -2670,7 +2732,7 @@ function escHtml(s){ return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&
     var w = document.createElement('div'); w.className = 'aria-cat';
     CATALOGO.forEach(function(p){
       var d = document.createElement('div'); d.className = 'it';
-      var im = document.createElement('img'); im.alt = p.nombre; im.loading = 'lazy'; imgProd(p, im); d.appendChild(im);
+      var im = document.createElement('img'); im.alt = p.nombre; im.loading = 'lazy'; imgProd(p, im); im.className = 'zoomable'; im.setAttribute('data-titulo', p.nombre); d.appendChild(im);
       var b = document.createElement('b'); b.textContent = p.nombre; d.appendChild(b);
       var s = document.createElement('span'); s.textContent = [p.tipo, (window.VINOS && VINOS[p.id] ? VINOS[p.id].origen : ''), p.tamano].filter(Boolean).join(' · '); d.appendChild(s);
       w.appendChild(d);
@@ -2692,6 +2754,7 @@ function escHtml(s){ return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&
     var d = document.createElement('div'); d.className = 'aria-prod';
     var img = document.createElement('img'); img.alt = p.nombre; img.loading = 'lazy';
     img.src = p.imagen || (p.id ? 'productos/' + p.id + '.jpg' : svgProd(p)); img.onerror = function(){ img.onerror = null; img.src = svgProd(p); };
+    img.className = 'zoomable'; img.setAttribute('data-titulo', p.nombre);
     d.appendChild(img);
     var c = document.createElement('div'); c.className = 'aria-prod-txt';
     var b = document.createElement('b'); b.textContent = p.nombre; c.appendChild(b);
@@ -2711,7 +2774,7 @@ function escHtml(s){ return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&
   function intentoLocal(q){
     var t = q.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
     // problemas o preguntas de consumidor: los responde la IA, no una guía
-    if(/no (funciona|sirve|carga|abre|sale|aparece|deja|guarda|suena|env)|error|falla|problema|bloque|trab|lent|pantalla en blanco|se cerro|se borro|perdi|maridaje|maridar|temperatura|servir|acompa|diferencia|recomiend|que vino|cual vino|regalo para|consumidor|cliente pregunt|precio|mercado|tendencia|competencia/.test(t)) return null;
+    if(/speech|pitch|vender|venda|convenc|objeci|cerrar|cierre|abord|argument|ticket|cruzad|combo|ofrec|regal|no (funciona|sirve|carga|abre|sale|aparece|deja|guarda|suena|env)|error|falla|problema|bloque|trab|lent|pantalla en blanco|se cerro|se borro|perdi|maridaje|maridar|temperatura|servir|acompa|diferencia|recomiend|que vino|cual vino|regalo para|consumidor|cliente pregunt|precio|mercado|tendencia|competencia/.test(t)) return null;
     if(/catalogo|que (productos|vinos)|(productos|vinos) (hay|tiene|son|manejan)|ver (productos|vinos)|portafolio/.test(t)) return {c:1};
     if(/recorrido|proceso completo|todo el proceso|paso a paso completo|como se usa|como funciona|como uso la (app|herramienta)/.test(t)) return {g:'completa'};
     if(/(como|donde).*(ingres|entr|comenz|empez|inici)|ingreso|foto de ingreso|ubicacion|gps/.test(t)) return {g:'ingreso'};
@@ -2750,6 +2813,12 @@ function escHtml(s){ return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&
     setTimeout(function(){ $('ariaTexto').focus(); }, 150);
   }
 
+  function contextoAsesor(){
+    try{
+      var m = (typeof MODS !== 'undefined' && typeof current !== 'undefined') ? (MODS.filter(function(x){ return x.id === current; })[0] || {}).label : '';
+      return { asesor: (getAsesorNombre()||'').split(' ')[0], pdv: getPDV(), ciudad: getCiudad(), modulo: m || '' };
+    }catch(e){ return {}; }
+  }
   async function preguntar(pregunta){
     pregunta = (pregunta || '').trim();
     if(enviando || !pregunta) return;
@@ -2762,10 +2831,11 @@ function escHtml(s){ return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&
     try{
       // text/plain evita el preflight CORS, igual que el resto de la app
       var res = await fetch(ARIA_URL, {method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'},
-        body: JSON.stringify({accion:'ayuda', pregunta: pregunta.slice(0,400)}), redirect:'follow'});
+        body: JSON.stringify({accion:'ayuda', pregunta: pregunta.slice(0,400), historial: historial.slice(-6), contexto: contextoAsesor()}), redirect:'follow'});
       var data = await res.json();
       var txt = data && data.respuesta ? data.respuesta : (data && data.error ? data.error : 'No pude responder en este momento.');
       pensando.textContent = txt;
+      if(data && data.respuesta){ historial.push({role:'user', content: pregunta.slice(0,400)}, {role:'assistant', content: data.respuesta.slice(0,900)}); historial = historial.slice(-6); }
       if(data && data.productos && data.productos.length){ data.productos.forEach(tarjeta); }
       hablar(txt);
     }catch(e){
@@ -2774,6 +2844,8 @@ function escHtml(s){ return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&
   }
 
   $('ariaBtn').onclick = abrirChat;
+  // Atajo desde Ventas/Degustación: abre ARIA y pide el speech del vino elegido
+  window.ariaSpeech = function(vino){ abrirChat(); setTimeout(function(){ preguntar('Diséñame un speech de venta corto para ' + vino); }, conectada ? 150 : 1750); };
   $('ariaCerrar').onclick = function(){ $('ariaPanel').classList.remove('open'); detenerGuia(); if(TTS) TTS.cancel(); };
   $('ariaEnviar').onclick = function(){ var t = $('ariaTexto').value; $('ariaTexto').value=''; preguntar(t); };
   $('ariaTexto').addEventListener('keydown', function(e){ if(e.key === 'Enter'){ e.preventDefault(); $('ariaEnviar').click(); } });
@@ -2782,6 +2854,7 @@ function escHtml(s){ return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&
     if(b.getAttribute('data-g')) mostrarGuia(b.getAttribute('data-g'), b.textContent.replace(/^▶\s*/, ''));
     else if(b.getAttribute('data-cat')) mostrarCatalogo('Ver catálogo');
     else if(b.getAttribute('data-q')) preguntar(b.getAttribute('data-q'));
+    else if(b.getAttribute('data-speech')) mostrarCombo('¿Para qué vino quieres el speech?', (parametrizacion.skus||[]), function(v){ preguntar('Diséñame un speech de venta corto para ' + v); }, true);
     else if(b.getAttribute('data-tut')){ $('ariaCerrar').click(); setTimeout(function(){ if(window.abrirTutorial) window.abrirTutorial(); }, 250); }
   });
   $('ariaVoz').onclick = function(){
