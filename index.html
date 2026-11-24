@@ -1,0 +1,2630 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#4C1D95">
+<!-- iOS: que se comporte como app al agregarla a inicio (sin barra de Safari) y no pierda estado -->
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Meico">
+<meta name="format-detection" content="telephone=no">
+<title>Meico · Gestión en PDV</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --brand:#6D28D9; --brand-deep:#4C1D95; --brand-grad:linear-gradient(140deg,#A78BFA 0%,#6D28D9 55%,#2E1065 100%);
+    --brand-light:#8B5CF6; --brand-soft:#F1EBFF; --bg:#F7F5FB; --surface:#fff;
+    --ink:#1E1830; --ink-soft:#776C8C; --muted:#C6BCD6; --line:#EEE8F7; --line-strong:#E2D8F3;
+    --success:#18a957; --success-soft:#e4f7ec; --error:#e23b4e; --error-soft:#fdecee; --warn:#d98a13; --warn-soft:#fdf3e2;
+    --r-xl:26px; --r-lg:20px; --r-md:14px; --r-sm:11px;
+    --sh-card:0 16px 40px -18px rgba(109,40,217,.28); --sh-soft:0 6px 18px -10px rgba(109,40,217,.4); --sh-pop:0 18px 44px -10px rgba(76,29,149,.4);
+  }
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+  html{-webkit-text-size-adjust:100%}
+  body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--ink);font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased;min-height:100vh;padding-bottom:120px}
+  h1,h2,h3{font-family:'Poppins',sans-serif}
+  .icon{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0}
+  svg{pointer-events:none}
+  button,.btn,.nav-icon,.fab,.opt label,.upload,.modgrid-item{touch-action:manipulation}
+  .icon-lg{width:22px;height:22px}.icon-sm{width:15px;height:15px}.icon-xl{width:30px;height:30px}
+
+  /* TOPBAR */
+  .topbar{background:var(--brand-grad);color:#fff;padding:max(20px,env(safe-area-inset-top)) 20px 26px;border-radius:0 0 28px 28px;position:sticky;top:0;z-index:40;overflow:hidden}
+  .topbar::before{content:'';position:absolute;top:-50px;right:-30px;width:150px;height:150px;background:rgba(255,255,255,.08);border-radius:50%}
+  .topbar-row{max-width:720px;margin:0 auto;display:flex;align-items:center;gap:12px;position:relative;z-index:1}
+  .topbar-logo{width:40px;height:40px;background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.25);border-radius:var(--r-md);display:flex;align-items:center;justify-content:center}
+  .topbar-brand{flex:1}.topbar-brand b{font-family:'Poppins';font-weight:600;font-size:16px;display:block}.topbar-brand span{font-size:12px;opacity:.8}
+  .greet{max-width:720px;margin:16px auto 0;position:relative;z-index:1}
+  .greet h1{font-size:20px;font-weight:700}.greet p{font-size:12.5px;opacity:.82;margin-top:2px}
+
+  /* STAGE */
+  .stage{max-width:720px;margin:-14px auto 0;padding:0 16px;position:relative;z-index:2}
+  .mod{display:none;animation:fadeIn .32s ease}.mod.active{display:block}
+  @keyframes fadeIn{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+  .card{background:var(--surface);border-radius:var(--r-xl);padding:22px;box-shadow:var(--sh-card)}
+  .card-head{display:flex;align-items:center;gap:13px;margin-bottom:20px}
+  .card-chip{width:46px;height:46px;background:var(--brand-soft);color:var(--brand);border-radius:var(--r-md);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+  .card-head-text{flex:1;min-width:0}.card-title{font-family:'Poppins';font-size:16px;font-weight:600}.card-sub{font-size:12.5px;color:var(--muted);margin-top:1px}
+  .saved-badge{display:none;align-items:center;gap:4px;font-size:11px;font-weight:600;color:var(--success);background:var(--success-soft);padding:5px 9px;border-radius:20px}
+  .saved-badge.on{display:inline-flex}
+  .lock-note{display:flex;align-items:center;gap:9px;padding:11px 13px;background:var(--warn-soft);color:#8a5a0d;border-radius:var(--r-md);font-size:12.5px;margin-bottom:16px}
+  .info-banner{display:flex;flex-direction:column;gap:9px;padding:12px 13px;background:var(--brand-soft);color:var(--brand-deep);border-radius:var(--r-md);margin-bottom:16px}
+  .info-banner-title{display:flex;align-items:center;gap:7px;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.3px}
+  .info-banner-chips{display:flex;flex-wrap:wrap;gap:7px}
+  .info-chip{background:#fff;color:var(--brand-deep);border:1.5px solid var(--line-strong);border-radius:20px;padding:6px 12px;font-size:12.5px;font-weight:600}
+
+  /* FIELDS */
+  .field{margin-bottom:15px}.field:last-child{margin-bottom:0}
+  .field-row{display:grid;grid-template-columns:1fr 1fr;gap:11px}
+  .label{display:block;font-size:12.5px;font-weight:600;color:var(--ink-soft);margin-bottom:7px}
+  .label-req::after{content:'*';color:var(--error);margin-left:3px}
+  .input,.select,.textarea{width:100%;padding:13px 15px;border:1.5px solid var(--line-strong);border-radius:var(--r-md);background:#FCFAFF;font-family:inherit;font-size:16px;color:var(--ink);transition:all .15s ease;min-height:48px}
+  .input::placeholder,.textarea::placeholder{color:var(--muted)}
+  .input:hover,.select:hover,.textarea:hover{border-color:#C4B5FD}
+  .input:focus,.select:focus,.textarea:focus{outline:none;border-color:var(--brand-light);background:#fff;box-shadow:0 0 0 4px rgba(139,92,246,.14)}
+  .select{appearance:none;-webkit-appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 24 24' fill='none' stroke='%236D28D9' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 14px center;padding-right:40px}
+  .select:disabled{background-color:#F1EDF8;color:var(--muted);cursor:not-allowed}
+  .textarea{min-height:82px;resize:vertical}
+
+  /* OPTIONS */
+  .opt-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(100px,1fr));gap:9px}.opt-grid-2{grid-template-columns:repeat(2,1fr)}
+  .opt{position:relative}.opt input{position:absolute;opacity:0;pointer-events:none}
+  .opt label{display:flex;align-items:center;justify-content:center;gap:7px;padding:13px;background:#FCFAFF;border:1.5px solid var(--line-strong);border-radius:var(--r-md);cursor:pointer;font-size:14px;font-weight:600;color:var(--ink-soft);transition:all .15s ease;text-align:center;min-height:50px}
+  .opt label:hover{border-color:var(--brand-light);color:var(--brand)}
+  .opt input:checked+label{background:var(--brand);border-color:var(--brand);color:#fff;box-shadow:var(--sh-soft)}
+  .opt .chk{display:none}.opt input:checked+label .chk{display:inline-flex}
+
+  /* BUTTONS */
+  .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:13px 20px;border:1.5px solid transparent;border-radius:var(--r-md);font-family:'Poppins',sans-serif;font-size:14.5px;font-weight:600;cursor:pointer;transition:all .15s ease;min-height:48px;white-space:nowrap}
+  .btn-primary{background:var(--brand);color:#fff;box-shadow:var(--sh-soft)}.btn-primary:hover:not(:disabled){background:var(--brand-deep)}
+  .btn-soft{background:var(--brand-soft);color:var(--brand)}.btn-soft:hover{background:#E6DAFF}
+  .btn-outline{background:#fff;color:var(--ink);border-color:var(--line-strong)}
+  .btn-success{background:var(--success);color:#fff}.btn-success:hover{background:#13954b}
+  .btn-danger{background:transparent;color:var(--error);border-color:var(--line-strong)}.btn-danger:hover{background:var(--error-soft);border-color:var(--error)}
+  .btn-block{width:100%}.btn-sm{padding:8px 13px;font-size:13px;min-height:38px}.btn-icon{padding:8px;min-height:38px;width:38px}
+  .save-row{margin-top:20px;padding-top:18px;border-top:1px dashed var(--line-strong)}
+
+  /* ALERTS */
+  .alert{display:flex;align-items:flex-start;gap:11px;padding:14px;border-radius:var(--r-md);font-size:13px;margin-bottom:16px;border:1.5px solid}
+  .alert-error{background:var(--error-soft);color:var(--error);border-color:#f6c7cd}
+  .alert-actions{margin-top:9px;display:flex;gap:8px}
+  .shake{animation:shake .4s}@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+
+  /* GPS LOCATION */
+  .loc-box{border:1.5px solid var(--line-strong);border-radius:var(--r-md);padding:15px;background:#FCFAFF;transition:.2s}
+  .loc-box.ok{border-color:var(--success);background:var(--success-soft)}
+  .loc-top{display:flex;align-items:center;gap:12px}
+  .loc-ic{width:42px;height:42px;border-radius:50%;background:var(--brand-soft);color:var(--brand);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+  .loc-box.ok .loc-ic{background:#fff;color:var(--success)}
+  .loc-info{flex:1;min-width:0}.loc-info b{font-size:14px;font-family:'Poppins'}.loc-info span{display:block;font-size:12px;color:var(--ink-soft);margin-top:1px}
+  .loc-coords{margin-top:12px;font-size:12.5px;color:var(--ink-soft);display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+  .loc-coords a{color:var(--brand);font-weight:600;text-decoration:none}
+
+  /* LIST ITEMS */
+  .item{background:#FCFAFF;border:1.5px solid var(--line);border-radius:var(--r-lg);padding:15px;margin-bottom:11px}
+  .item-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:13px}
+  .item-title{font-family:'Poppins';font-size:13px;font-weight:600;color:var(--brand);display:flex;align-items:center;gap:8px}
+  .empty-hint{text-align:center;color:var(--muted);font-size:13px;padding:6px 0 14px}
+
+  /* UPLOAD */
+  .upload{position:relative;border:2px dashed var(--line-strong);border-radius:var(--r-lg);padding:24px 16px;text-align:center;cursor:pointer;transition:all .15s;background:#FCFAFF}
+  .upload:hover{border-color:var(--brand-light);background:var(--brand-soft)}
+  .upload.has{padding:12px;border-style:solid;border-color:var(--success);background:var(--success-soft)}
+  .upload input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer}
+  .upload-ic{width:44px;height:44px;background:var(--brand-soft);color:var(--brand);border-radius:50%;display:inline-flex;align-items:center;justify-content:center;margin-bottom:10px}
+  .upload-t{font-size:13.5px;font-weight:600}.upload-h{font-size:12px;color:var(--muted);margin-top:2px}
+  .preview-img{max-width:100%;max-height:220px;border-radius:var(--r-md);display:block;margin:0 auto}
+  .preview-act{display:flex;gap:8px;margin-top:11px;justify-content:center}
+  .upload-mini{padding:14px 10px}.upload-mini .upload-ic{width:34px;height:34px;margin-bottom:6px}.upload-mini .preview-img{max-height:140px}
+
+  /* SUMMARY */
+  .mod-state{display:flex;align-items:center;gap:10px;padding:11px 13px;border:1.5px solid var(--line);border-radius:var(--r-md);margin-bottom:8px}
+  .mod-state .ms-ic{width:32px;height:32px;border-radius:9px;background:var(--brand-soft);color:var(--brand);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+  .mod-state .ms-name{flex:1;font-weight:600;font-size:14px}
+  .ms-tag{font-size:11px;font-weight:700;padding:4px 9px;border-radius:20px}
+  .ms-tag.ok{background:var(--success-soft);color:var(--success)}.ms-tag.no{background:#f1eef0;color:var(--muted)}
+  .res-sec{margin-bottom:16px}
+  .res-sec-h{display:flex;align-items:center;gap:8px;font-family:'Poppins';font-size:13px;font-weight:600;color:var(--brand);margin-bottom:9px}
+  .res-line{display:flex;justify-content:space-between;gap:12px;font-size:13px;padding:7px 0;border-bottom:1px solid var(--line)}
+  .res-line:last-child{border:none}.res-line .rk{color:var(--ink-soft)}.res-line .rv{font-weight:600;text-align:right;word-break:break-word}
+  .res-mini{font-size:12.5px;color:var(--ink-soft);padding:5px 0}
+  .res-mini b{color:var(--ink)}
+
+  /* BOTTOM NAV + MODULE SHEET */
+  .bottomnav{position:fixed;bottom:0;left:0;right:0;z-index:60;background:#fff;border-top:1px solid var(--line);padding:12px 18px;padding-bottom:max(12px,env(safe-area-inset-bottom));display:flex;align-items:center;justify-content:space-between;gap:12px}
+  .nav-side{flex:1;display:flex}.nav-side.right{justify-content:flex-end}
+  .fab-slot{position:relative;width:64px;flex-shrink:0}
+  .fab{position:absolute;left:50%;bottom:2px;transform:translateX(-50%);width:62px;height:62px;border-radius:50%;border:4px solid var(--bg);background:var(--brand-grad);color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 10px 24px -6px rgba(109,40,217,.6);transition:transform .3s cubic-bezier(.34,1.56,.64,1)}
+  .fab:hover{transform:translateX(-50%) scale(1.05)}
+  .fab .fab-ic{transition:transform .35s ease}.fab.spin .fab-ic{transform:rotate(135deg)}
+
+  .modgrid-bd{position:fixed;inset:0;background:rgba(30,24,48,.55);opacity:0;pointer-events:none;transition:opacity .25s;z-index:58}
+  .modgrid-bd.open{opacity:1;pointer-events:auto}
+  .modgrid{position:fixed;left:0;right:0;bottom:0;z-index:62;background:#fff;border-radius:24px 24px 0 0;padding:20px 18px max(20px,env(safe-area-inset-bottom));max-width:720px;margin:0 auto;box-shadow:0 -10px 40px -10px rgba(0,0,0,.3);transform:translateY(105%);transition:transform .35s cubic-bezier(.34,1.56,.64,1)}
+  .modgrid.open{transform:translateY(0)}
+  .modgrid-h{font-family:'Poppins';font-weight:600;font-size:15px;margin-bottom:14px;text-align:center;color:var(--ink)}
+  .modgrid-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+  .modgrid-item{position:relative;display:flex;flex-direction:column;align-items:center;gap:6px;padding:12px 4px;border-radius:16px;border:1.5px solid var(--line);background:#FCFAFF;cursor:pointer;border-style:solid}
+  .modgrid-item.active{border-color:var(--brand);background:var(--brand-soft)}
+  .modgrid-item.locked{opacity:.42;cursor:not-allowed}
+  .modgrid-ic{width:38px;height:38px;border-radius:50%;background:var(--brand-soft);color:var(--brand);display:flex;align-items:center;justify-content:center}
+  .modgrid-item.active .modgrid-ic{background:var(--brand);color:#fff}
+  .modgrid-lbl{font-size:10.5px;font-weight:600;text-align:center;line-height:1.15;color:var(--ink-soft)}
+  .modgrid-item.active .modgrid-lbl{color:var(--brand)}
+  .modgrid-check{position:absolute;top:5px;right:5px;width:16px;height:16px;border-radius:50%;background:var(--success);color:#fff;display:flex;align-items:center;justify-content:center}
+  .modgrid-check svg{width:10px;height:10px}
+
+  /* HOJA DE SELECCIÓN DE PRODUCTO (buscador) */
+  .combosheet-bd{position:fixed;inset:0;background:rgba(30,24,48,.55);opacity:0;pointer-events:none;transition:opacity .25s;z-index:70}
+  .combosheet-bd.open{opacity:1;pointer-events:auto}
+  .combosheet{position:fixed;left:0;right:0;bottom:0;z-index:72;background:#fff;border-radius:24px 24px 0 0;padding:18px 18px max(18px,env(safe-area-inset-bottom));max-width:720px;margin:0 auto;box-shadow:0 -10px 40px -10px rgba(0,0,0,.3);transform:translateY(105%);transition:transform .3s cubic-bezier(.34,1.56,.64,1);display:flex;flex-direction:column;max-height:78vh}
+  .combosheet.open{transform:translateY(0)}
+  .combosheet-h{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-shrink:0}
+  .combosheet-h b{font-family:'Poppins';font-size:15px;font-weight:600}
+  .combosheet-close{width:32px;height:32px;border-radius:50%;border:none;background:var(--bg);color:var(--ink-soft);display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0}
+  .combosheet-search{position:relative;margin-bottom:10px;flex-shrink:0}
+  .combosheet-search svg{position:absolute;left:14px;top:50%;transform:translateY(-50%);color:var(--muted);pointer-events:none}
+  .combosheet-search input{width:100%;padding:13px 15px 13px 42px;border:1.5px solid var(--line-strong);border-radius:var(--r-md);background:#FCFAFF;font-family:inherit;font-size:16px;min-height:46px}
+  .combosheet-search input:focus{outline:none;border-color:var(--brand-light);background:#fff;box-shadow:0 0 0 4px rgba(139,92,246,.14)}
+  .combosheet-list{overflow-y:auto;flex:1;-webkit-overflow-scrolling:touch;border-top:1px solid var(--line)}
+  .combo-item{padding:14px 6px;font-size:14.5px;color:var(--ink);border-bottom:1px solid var(--line);cursor:pointer}
+  .combo-item:active{background:var(--brand-soft)}
+
+  /* TOAST */
+  .toast{position:fixed;left:50%;bottom:96px;transform:translateX(-50%) translateY(20px);background:var(--ink);color:#fff;padding:12px 18px;border-radius:var(--r-md);font-size:13.5px;font-weight:600;display:flex;align-items:center;gap:9px;box-shadow:var(--sh-pop);opacity:0;pointer-events:none;transition:all .3s;z-index:9998}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+  .toast .icon{color:#7ef0c0}
+  .toast.warn .icon{color:#ffd27a}
+
+  /* OVERLAYS */
+  .overlay{position:fixed;inset:0;background:rgba(30,24,48,.5);backdrop-filter:blur(4px);display:none;align-items:center;justify-content:center;z-index:9999;padding:20px}.overlay.show{display:flex}
+  .modal{background:#fff;border-radius:var(--r-xl);padding:30px 26px;max-width:380px;width:100%;text-align:center;box-shadow:var(--sh-pop);position:relative}
+  .spinner{width:40px;height:40px;border:3.5px solid var(--brand-soft);border-top-color:var(--brand);border-radius:50%;animation:spin .7s linear infinite;margin:0 auto 16px}@keyframes spin{to{transform:rotate(360deg)}}
+  .modal-msg{font-size:14px;color:var(--ink-soft);font-weight:500}
+  .ok-ic{width:68px;height:68px;background:var(--success-soft);color:var(--success);border-radius:50%;display:inline-flex;align-items:center;justify-content:center;margin-bottom:18px}
+  .ok-title{font-family:'Poppins';font-size:19px;font-weight:700;margin-bottom:6px}.ok-sub{font-size:14px;color:var(--ink-soft);margin-bottom:20px}
+  .ok-info{background:var(--bg);border-radius:var(--r-md);padding:12px 14px;margin-bottom:20px;font-size:12px;color:var(--ink-soft);text-align:left;word-break:break-all;white-space:pre-line}
+  @media(max-width:480px){.field-row{grid-template-columns:1fr}.card{padding:18px}.modgrid-grid{grid-template-columns:repeat(4,1fr);gap:8px}}
+
+  /* PORTADA */
+  .portada{position:fixed;inset:0;z-index:200;display:flex;flex-direction:column;overflow:hidden;background:#2E1065;transition:transform .6s cubic-bezier(.7,0,.25,1),opacity .55s ease}
+  .portada.hide{transform:translateY(-101%);opacity:0;pointer-events:none}
+  .portada-bg{position:absolute;inset:0;width:100%;height:100%;z-index:0;display:block}
+  .portada-content{position:relative;z-index:1;flex:1;display:flex;flex-direction:column;padding:max(38px,env(safe-area-inset-top)) 26px max(30px,env(safe-area-inset-bottom));max-width:460px;width:100%;margin:0 auto}
+  .portada-brand{display:inline-flex;align-items:center;gap:8px;color:#fff;font-family:'Poppins';font-weight:600;font-size:12px;letter-spacing:2px;opacity:.92;text-transform:uppercase}
+  .portada-hero{margin-top:30px}
+  .portada-hero h1{color:#fff;font-size:38px;font-weight:700;line-height:1.04;text-shadow:0 2px 20px rgba(20,8,40,.3)}
+  .portada-hero p{color:rgba(255,255,255,.9);font-size:15px;margin-top:9px;max-width:280px;text-shadow:0 1px 10px rgba(20,8,40,.25)}
+  .portada-form{margin-top:auto}
+  .portada-err{display:none;color:#fff;background:rgba(226,59,78,.9);border-radius:13px;padding:11px 15px;font-size:13px;margin-bottom:13px;text-align:center;font-weight:500}
+  .pinput{position:relative;margin-bottom:13px}
+  .pinput .pic{position:absolute;left:18px;top:50%;transform:translateY(-50%);color:rgba(255,255,255,.85);display:flex}
+  .pinput input{width:100%;padding:17px 18px 17px 50px;border-radius:30px;border:1.5px solid rgba(255,255,255,.4);background:rgba(255,255,255,.16);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);color:#fff;font-family:inherit;font-size:16px;transition:.2s}
+  .pinput input::placeholder{color:rgba(255,255,255,.72)}
+  .pinput input:focus{outline:none;border-color:#fff;background:rgba(255,255,255,.24);box-shadow:0 0 0 4px rgba(255,255,255,.14)}
+  .pselect{position:relative;margin-bottom:13px}
+  .pselect .pic{position:absolute;left:18px;top:50%;transform:translateY(-50%);color:rgba(255,255,255,.85);display:flex;pointer-events:none;z-index:1}
+  .pselect select{width:100%;padding:17px 44px 17px 50px;border-radius:30px;border:1.5px solid rgba(255,255,255,.4);background:rgba(255,255,255,.16);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);color:#fff;font-family:inherit;font-size:16px;appearance:none;-webkit-appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 18px center}
+  .pselect select:focus{outline:none;border-color:#fff;background-color:rgba(255,255,255,.24);box-shadow:0 0 0 4px rgba(255,255,255,.14)}
+  .pselect select option{color:#1E1830}
+  .asesor-chip{display:none;align-items:center;gap:10px;padding:11px 16px;border-radius:20px;border:1.5px solid rgba(255,255,255,.35);background:rgba(255,255,255,.14);color:#fff;font-size:12.5px;margin:-4px 0 13px;backdrop-filter:blur(6px)}
+  .asesor-chip.show{display:flex}
+  .btn-portada{width:100%;margin-top:6px;padding:17px;border:none;border-radius:30px;background:#fff;color:var(--brand-deep);font-family:'Poppins';font-weight:700;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:9px;box-shadow:0 16px 34px -12px rgba(20,8,40,.55);transition:transform .2s,box-shadow .2s}
+  .btn-portada:hover{transform:translateY(-2px);box-shadow:0 20px 40px -12px rgba(20,8,40,.6)}
+  .btn-portada:active{transform:translateY(0)}
+  .portada-foot{margin-top:18px;text-align:center;color:rgba(255,255,255,.82);font-size:12px}
+  .petalfloat{animation:floaty 6s ease-in-out infinite}
+  @keyframes floaty{0%,100%{transform:translate(0,0);opacity:.35}50%{transform:translate(9px,-16px);opacity:.9}}
+
+  /* Chip asesor/PDV en módulo Ingreso */
+  .merc-chip{display:flex;align-items:center;gap:12px;padding:13px;border:1.5px solid var(--line-strong);border-radius:var(--r-md);background:var(--brand-soft);margin-bottom:16px}
+  .merc-ava{width:44px;height:44px;border-radius:50%;background:var(--brand-grad);color:#fff;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+  .merc-info{flex:1;min-width:0}.merc-info b{font-family:'Poppins';font-size:14.5px;display:block;color:var(--ink)}.merc-info span{font-size:12.5px;color:var(--ink-soft)}
+
+  /* AVATAR BURBUJA (topbar) */
+  .avatar-bubble{width:44px;height:44px;border-radius:50%;border:2px solid rgba(255,255,255,.55);overflow:hidden;flex-shrink:0;background:rgba(255,255,255,.16);display:flex;align-items:center;justify-content:center;color:#fff;cursor:pointer;transition:.15s}
+  .avatar-bubble:hover{border-color:#fff}
+  .progress-wrap{max-width:720px;margin:14px auto 0;position:relative;z-index:1}
+  .progress-wrap .step-pill{display:inline-block;margin-bottom:9px;font-family:'Poppins';font-size:12px;font-weight:600;background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.22);padding:6px 12px;border-radius:20px}
+  .progress{max-width:720px;margin:0 auto;display:flex;gap:4px;position:relative;z-index:1}
+  .progress span{flex:1;height:5px;border-radius:3px;background:rgba(255,255,255,.22);transition:background .3s}
+  .progress span.done{background:#F5C451}.progress span.cur{background:#fff}
+
+  /* NAV-ICON */
+  .nav-icon{width:48px;height:48px;border-radius:50%;border:1.5px solid var(--line-strong);background:#fff;color:var(--brand);display:flex;align-items:center;justify-content:center;cursor:pointer;transition:.15s}
+  .nav-icon:hover{background:var(--brand-soft);border-color:var(--brand-light)}
+
+  /* MODAL PERSONA / RESUMEN */
+  .modal.left{text-align:left;max-width:400px}
+  .modal-h{font-family:'Poppins';font-size:18px;font-weight:700;margin-bottom:3px;display:flex;align-items:center;gap:9px}
+  .modal-p{font-size:13px;color:var(--ink-soft);margin-bottom:18px}
+  .modal-close{position:absolute;top:16px;right:16px;width:34px;height:34px;border-radius:50%;border:none;background:var(--bg);color:var(--ink-soft);display:flex;align-items:center;justify-content:center;cursor:pointer}
+
+  /* VOZ DEL CONSUMIDOR / opciones con emoji */
+  .opt-grid.emoji-grid{grid-template-columns:repeat(auto-fit,minmax(64px,1fr));gap:8px}
+  .opt-grid.emoji-grid .opt label{flex-direction:column;gap:4px;padding:10px 6px;min-height:66px}
+  .emoji-ic{font-size:23px;line-height:1}
+  .emoji-lbl{font-size:10px;font-weight:600;line-height:1.2}
+</style>
+</head>
+<body>
+
+<svg xmlns="http://www.w3.org/2000/svg" style="display:none">
+  <symbol id="i-drop" viewBox="0 0 24 24"><path d="M8 2h8l-.6 6.2A3.4 3.4 0 0 1 12 11.4a3.4 3.4 0 0 1-3.4-3.2Z"/><line x1="12" y1="11.4" x2="12" y2="20"/><line x1="8" y1="21" x2="16" y2="21"/></symbol>
+  <symbol id="i-wine" viewBox="0 0 24 24"><path d="M8 2h8l-.6 6.2A3.4 3.4 0 0 1 12 11.4a3.4 3.4 0 0 1-3.4-3.2Z"/><line x1="12" y1="11.4" x2="12" y2="20"/><line x1="8" y1="21" x2="16" y2="21"/></symbol>
+  <symbol id="i-gift" viewBox="0 0 24 24"><rect x="3" y="8" width="18" height="4" rx="1"/><path d="M12 8v13"/><path d="M19 12v7a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2v-7"/><path d="M7.5 8a2.5 2.5 0 0 1 0-5C11 3 12 8 12 8s1-5 4.5-5a2.5 2.5 0 0 1 0 5"/></symbol>
+  <symbol id="i-user" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></symbol>
+  <symbol id="i-id" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="9" cy="12" r="2.2"/><line x1="14" y1="10" x2="18" y2="10"/><line x1="14" y1="14" x2="18" y2="14"/></symbol>
+  <symbol id="i-phone" viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07 19.5 19.5 0 01-6-6 19.79 19.79 0 01-3.07-8.67A2 2 0 014.11 2h3a2 2 0 012 1.72c.13.96.36 1.9.7 2.81a2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.91.34 1.85.57 2.81.7A2 2 0 0122 16.92z"/></symbol>
+  <symbol id="i-pin" viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></symbol>
+  <symbol id="i-nav" viewBox="0 0 24 24"><polygon points="3 11 22 2 13 21 11 13 3 11"/></symbol>
+  <symbol id="i-cart" viewBox="0 0 24 24"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.7 13.4a2 2 0 002 1.6h9.7a2 2 0 002-1.6L23 6H6"/></symbol>
+  <symbol id="i-chat" viewBox="0 0 24 24"><path d="M21 11.5a8.38 8.38 0 01-.9 3.8 8.5 8.5 0 01-7.6 4.7 8.38 8.38 0 01-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 01-.9-3.8 8.5 8.5 0 014.7-7.6 8.38 8.38 0 013.8-.9h.5a8.48 8.48 0 018 8z"/></symbol>
+  <symbol id="i-list" viewBox="0 0 24 24"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></symbol>
+  <symbol id="i-plus" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></symbol>
+  <symbol id="i-trash" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></symbol>
+  <symbol id="i-upload" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></symbol>
+  <symbol id="i-alert" viewBox="0 0 24 24"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></symbol>
+  <symbol id="i-camera" viewBox="0 0 24 24"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></symbol>
+  <symbol id="i-copy" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></symbol>
+  <symbol id="i-box" viewBox="0 0 24 24"><path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></symbol>
+  <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></symbol>
+  <symbol id="i-grid" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/></symbol>
+  <symbol id="i-edit" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.12 2.12 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></symbol>
+  <symbol id="i-x" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></symbol>
+  <symbol id="i-save" viewBox="0 0 24 24"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></symbol>
+  <symbol id="i-refresh" viewBox="0 0 24 24"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></symbol>
+  <symbol id="i-arrowr" viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="13 6 19 12 13 18"/></symbol>
+  <symbol id="i-lock" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></symbol>
+  <symbol id="i-logout" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></symbol>
+</svg>
+
+<!-- PORTADA / BIENVENIDA -->
+<div class="portada" id="portada">
+  <svg class="portada-bg" viewBox="0 0 390 844" preserveAspectRatio="xMidYMax slice" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+    <defs>
+      <linearGradient id="skyMeico" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#C4B5FD"/><stop offset=".45" stop-color="#6D28D9"/><stop offset="1" stop-color="#1E0A3C"/></linearGradient>
+      <linearGradient id="w1Meico" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#8B5CF6"/><stop offset="1" stop-color="#5B21B6"/></linearGradient>
+      <linearGradient id="w2Meico" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#5B21B6"/><stop offset="1" stop-color="#4C1D95"/></linearGradient>
+      <linearGradient id="w3Meico" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#4C1D95"/><stop offset="1" stop-color="#1E0A3C"/></linearGradient>
+    </defs>
+    <rect width="390" height="844" fill="url(#skyMeico)"/>
+    <circle cx="298" cy="150" r="60" fill="#F5C451" opacity=".14"/>
+    <circle cx="298" cy="150" r="38" fill="#F5C451" opacity=".2"/>
+    <path d="M298 118 l7.6 18.8 20.4 1.4 -15.6 13 4.9 19.8 -17.3-10.8 -17.3 10.8 4.9-19.8 -15.6-13 20.4-1.4 Z" fill="#F5C451" opacity=".9"/>
+    <g fill="#fff" opacity=".55">
+      <circle class="petalfloat" cx="60" cy="130" r="4"/>
+      <circle class="petalfloat" cx="100" cy="165" r="3" style="animation-delay:1.4s"/>
+      <circle class="petalfloat" cx="140" cy="105" r="3.5" style="animation-delay:2.6s"/>
+      <circle class="petalfloat" cx="205" cy="90" r="2.5" style="animation-delay:.8s"/>
+      <circle class="petalfloat" cx="165" cy="150" r="2.5" style="animation-delay:3.4s"/>
+      <circle class="petalfloat" cx="40" cy="260" r="3" style="animation-delay:2s"/>
+      <circle class="petalfloat" cx="120" cy="300" r="2.2" style="animation-delay:.4s"/>
+      <circle class="petalfloat" cx="230" cy="250" r="3.2" style="animation-delay:1.1s"/>
+      <circle class="petalfloat" cx="340" cy="290" r="2.4" style="animation-delay:2.9s"/>
+      <circle class="petalfloat" cx="80" cy="380" r="2.8" style="animation-delay:3.8s"/>
+      <circle class="petalfloat" cx="300" cy="400" r="2" style="animation-delay:1.7s"/>
+    </g>
+    <path fill="url(#w1Meico)" d="M0 560 C70 500 130 590 200 540 C270 495 320 570 390 520 L390 620 L0 620 Z"/>
+    <path fill="url(#w2Meico)" d="M0 640 C80 600 150 670 220 620 C280 580 340 650 390 610 L390 720 L0 720 Z"/>
+    <path fill="url(#w3Meico)" d="M0 720 C90 690 160 750 230 710 C290 678 340 730 390 700 L390 844 L0 844 Z"/>
+  </svg>
+  <div class="portada-content">
+    <div class="portada-brand"><svg class="icon icon-sm"><use href="#i-drop"/></svg> Meico</div>
+    <div class="portada-hero">
+      <h1>Hola de nuevo,</h1>
+      <p>Registra tu visita, ventas y degustaciones de la temporada navideña, paso a paso.</p>
+    </div>
+    <div class="portada-form" id="portadaForm">
+      <div class="portada-err" id="portadaErr">Escribe tu nombre, tu número de documento y elige el punto de venta.</div>
+
+      <div id="identManual">
+        <div class="pinput"><span class="pic"><svg class="icon"><use href="#i-user"/></svg></span><input type="text" id="asesorNombreTexto" placeholder="Nombre completo" autocomplete="name" oninput="onIdentChange()"></div>
+        <div class="pinput"><span class="pic"><svg class="icon"><use href="#i-id"/></svg></span><input type="tel" id="asesorDocumentoTexto" placeholder="Número de documento" inputmode="numeric" autocomplete="off" oninput="this.value=this.value.replace(/[^0-9]/g,'');onIdentChange()"></div>
+      </div>
+
+      <div class="pselect"><span class="pic"><svg class="icon"><use href="#i-pin"/></svg></span>
+        <select id="ciudad" onchange="onCiudadChange()"><option value="">Selecciona la ciudad</option></select>
+      </div>
+      <input type="text" id="ciudadTexto" class="input" placeholder="Escribe la ciudad" style="display:none;margin-bottom:13px;background:rgba(255,255,255,.18);border-color:rgba(255,255,255,.4);color:#fff">
+      <div class="pselect"><span class="pic"><svg class="icon"><use href="#i-pin"/></svg></span>
+        <select id="puntoVenta" onchange="onPdvChange()" disabled><option value="">Elige primero la ciudad</option></select>
+      </div>
+      <input type="text" id="pdvTexto" class="input" placeholder="Escribe el punto de venta" style="display:none;margin-bottom:13px;background:rgba(255,255,255,.16);border-color:rgba(255,255,255,.4);color:#fff">
+
+      <div id="alertParam" class="alert alert-error" style="display:none">
+        <svg class="icon"><use href="#i-alert"/></svg>
+        <div style="flex:1"><strong>No se pudieron cargar los puntos de venta.</strong>
+          <div id="alertParamMsg" style="margin-top:3px;font-size:12px;opacity:.9"></div>
+          <div style="margin-top:5px;font-size:12px">Puedes escribirlos manualmente.</div>
+          <div class="alert-actions"><button type="button" class="btn btn-danger btn-sm" onclick="cargarParametrizacion()"><svg class="icon icon-sm"><use href="#i-refresh"/></svg> Reintentar</button></div>
+        </div>
+      </div>
+
+      <button class="btn-portada" onclick="comenzar()">Comenzar <svg class="icon"><use href="#i-arrowr"/></svg></button>
+      <div class="portada-foot"><a href="#" onclick="event.preventDefault();abrirRecuperarSesion();" style="color:#fff;text-decoration:underline;font-weight:600">¿Ya tienes una gestión en curso? Recuperar sesión</a></div>
+      <div class="portada-foot">Una herramienta de <b style="font-weight:700;letter-spacing:.5px">SYNAPTIC</b></div>
+    </div>
+  </div>
+</div>
+
+<!-- TOPBAR -->
+<header class="topbar">
+  <div class="topbar-row">
+    <div class="topbar-logo"><svg class="icon icon-lg"><use href="#i-drop"/></svg></div>
+    <div class="topbar-brand"><b>Meico</b><span>Gestión comercial en el PDV</span></div>
+    <div class="avatar-bubble" id="avatarBubble" onclick="abrirPersona()" title="Mi información">
+      <svg class="icon icon-lg"><use href="#i-user"/></svg>
+    </div>
+  </div>
+  <div class="greet"><h1 id="heroGreet">Hola</h1><p id="heroDate"></p></div>
+  <div class="progress-wrap">
+    <span class="step-pill" id="stepPill">Ingreso</span>
+    <div class="progress" id="progress"></div>
+  </div>
+</header>
+
+<main class="stage" id="stage">
+
+  <!-- INGRESO -->
+  <section class="mod active" data-mod="ingreso">
+    <div class="card">
+      <div class="card-head">
+        <div class="card-chip"><svg class="icon icon-lg"><use href="#i-pin"/></svg></div>
+        <div class="card-head-text"><div class="card-title">Ingreso al PDV</div><div class="card-sub">Ubicación y foto de ingreso</div></div>
+        <span class="saved-badge" id="badge-ingreso"><svg class="icon icon-sm"><use href="#i-check"/></svg>Guardado</span>
+      </div>
+      <div class="merc-chip">
+        <div class="merc-ava"><svg class="icon icon-lg"><use href="#i-user"/></svg></div>
+        <div class="merc-info"><b id="mercNombre">—</b><span id="mercDoc">—</span></div>
+        <button type="button" class="btn btn-outline btn-sm" onclick="reabrirPortada()"><svg class="icon icon-sm"><use href="#i-edit"/></svg>Cambiar</button>
+      </div>
+      <div class="merc-chip">
+        <div class="merc-ava"><svg class="icon icon-lg"><use href="#i-pin"/></svg></div>
+        <div class="merc-info"><b id="mercPdv">—</b><span id="mercCiudad">Punto de venta</span></div>
+      </div>
+      <div class="field">
+        <label class="label label-req">Ubicación GPS</label>
+        <div class="loc-box" id="locBox">
+          <div class="loc-top">
+            <div class="loc-ic"><svg class="icon icon-lg"><use href="#i-nav"/></svg></div>
+            <div class="loc-info"><b id="locTitle">Ubicación no capturada</b><span id="locDesc">Toca el botón para registrar tu posición</span></div>
+          </div>
+          <div class="loc-coords" id="locCoords" style="display:none"></div>
+          <button type="button" class="btn btn-soft btn-block" style="margin-top:12px" id="btnGPS" onclick="capturarUbicacion()"><svg class="icon icon-sm"><use href="#i-refresh"/></svg>Actualizar ubicación</button>
+        </div>
+      </div>
+      <div class="field" style="margin-bottom:0">
+        <label class="label label-req">Foto de ingreso (obligatoria)</label>
+        <div class="upload" id="uploadIngreso">
+          <input type="file" id="fileIngreso" accept="image/*" capture="environment">
+          <div id="defIngreso"><div class="upload-ic"><svg class="icon icon-lg"><use href="#i-camera"/></svg></div><div class="upload-t">Toma o sube la foto de ingreso</div><div class="upload-h">JPG, PNG · Sin foto no se puede continuar</div></div>
+          <div id="prevIngreso" style="display:none"><img id="imgIngreso" class="preview-img"><div class="preview-act"><button type="button" class="btn btn-outline btn-sm" onclick="event.stopPropagation();document.getElementById('fileIngreso').click()"><svg class="icon icon-sm"><use href="#i-upload"/></svg>Cambiar</button><button type="button" class="btn btn-danger btn-sm" onclick="event.stopPropagation();quitarFotoIngreso()"><svg class="icon icon-sm"><use href="#i-trash"/></svg>Quitar</button></div></div>
+        </div>
+      </div>
+      <div class="save-row"><button class="btn btn-primary btn-block" onclick="guardarModulo('ingreso')"><svg class="icon"><use href="#i-save"/></svg>Guardar Ingreso y desbloquear módulos</button></div>
+    </div>
+  </section>
+
+  <!-- VENTAS -->
+  <section class="mod" data-mod="ventas">
+    <div class="card">
+      <div class="card-head">
+        <div class="card-chip"><svg class="icon icon-lg"><use href="#i-cart"/></svg></div>
+        <div class="card-head-text"><div class="card-title">Ventas</div><div class="card-sub">Productos vendidos en la visita</div></div>
+        <span class="saved-badge" id="badge-ventas"><svg class="icon icon-sm"><use href="#i-check"/></svg>Guardado</span>
+      </div>
+      <div class="info-banner">
+        <div class="info-banner-title"><svg class="icon icon-sm"><use href="#i-search"/></svg>Catálogo activo</div>
+        <div class="info-banner-chips"><span class="info-chip" id="chipCatalogo">Vinos Meico</span></div>
+      </div>
+      <div class="field"><label class="label label-req">¿Se realizó venta?</label>
+        <div class="opt-grid opt-grid-2">
+          <div class="opt"><input type="radio" name="ventaRealizada" id="vrSi" value="Si"><label for="vrSi"><svg class="icon icon-sm chk"><use href="#i-check"/></svg>Sí</label></div>
+          <div class="opt"><input type="radio" name="ventaRealizada" id="vrNo" value="No"><label for="vrNo"><svg class="icon icon-sm chk"><use href="#i-check"/></svg>No</label></div>
+        </div>
+      </div>
+      <div id="ventaNo" style="display:none">
+        <div class="field"><label class="label label-req" for="ventaMotivoNo">Motivo de no venta</label>
+          <select id="ventaMotivoNo" class="select"><option value="">Seleccionar</option><option>Sin flujo de clientes</option><option>Cliente no interesado</option><option>Precio</option><option>Sin inventario en el punto</option><option>Local cerrado</option><option>Otro</option></select>
+        </div>
+      </div>
+      <div id="ventaSi" style="display:none">
+        <div id="listaVentas"></div>
+        <button type="button" class="btn btn-soft btn-block" onclick="agregarVenta()"><svg class="icon icon-sm"><use href="#i-plus"/></svg>Agregar producto vendido</button>
+      </div>
+      <div class="save-row"><button class="btn btn-primary btn-block" onclick="guardarModulo('ventas')"><svg class="icon"><use href="#i-save"/></svg>Guardar Ventas</button></div>
+    </div>
+  </section>
+
+  <!-- DEGUSTACIONES -->
+  <section class="mod" data-mod="degustaciones">
+    <div class="card">
+      <div class="card-head">
+        <div class="card-chip"><svg class="icon icon-lg"><use href="#i-wine"/></svg></div>
+        <div class="card-head-text"><div class="card-title">Degustaciones</div><div class="card-sub">Muestras servidas en el PDV (solo mayores de edad)</div></div>
+        <span class="saved-badge" id="badge-degustaciones"><svg class="icon icon-sm"><use href="#i-check"/></svg>Guardado</span>
+      </div>
+      <div class="info-banner" id="bannerDegustacion" style="display:none">
+        <div class="info-banner-title"><svg class="icon icon-sm"><use href="#i-wine"/></svg>Vinos para degustar</div>
+        <div class="info-banner-chips" id="bannerDegustacionChips"></div>
+      </div>
+      <div class="field"><label class="label label-req">¿Se realizaron degustaciones?</label>
+        <div class="opt-grid opt-grid-2">
+          <div class="opt"><input type="radio" name="degustacionRealizada" id="drSi" value="Si"><label for="drSi"><svg class="icon icon-sm chk"><use href="#i-check"/></svg>Sí</label></div>
+          <div class="opt"><input type="radio" name="degustacionRealizada" id="drNo" value="No"><label for="drNo"><svg class="icon icon-sm chk"><use href="#i-check"/></svg>No</label></div>
+        </div>
+      </div>
+      <div id="degustacionNo" style="display:none">
+        <div class="field"><label class="label label-req" for="degustacionMotivoNo">Motivo de no degustación</label>
+          <select id="degustacionMotivoNo" class="select"><option value="">Seleccionar</option><option>Local cerrado</option><option>Sin insumos</option><option>Sin clientes en el punto</option><option>No autorizada por el punto</option><option>Otro</option></select>
+        </div>
+      </div>
+      <div id="degustacionSi" style="display:none">
+        <div id="listaDegustaciones"></div>
+        <button type="button" class="btn btn-soft btn-block" onclick="agregarDegustacion()"><svg class="icon icon-sm"><use href="#i-plus"/></svg>Agregar vino degustado</button>
+      </div>
+      <div class="field" style="margin-top:16px"><label class="label label-req" for="degustacionImpactos">Impactos generados (personas abordadas, con o sin degustación)</label>
+        <input type="number" id="degustacionImpactos" class="input" min="0" inputmode="numeric" placeholder="Ej: 25">
+      </div>
+      <div class="field" style="margin-bottom:0"><label class="label" for="degustacionObservaciones">Observaciones de la degustación</label>
+        <textarea id="degustacionObservaciones" class="textarea" placeholder="Notas sobre la degustación o la activación"></textarea>
+      </div>
+      <div class="save-row"><button class="btn btn-primary btn-block" onclick="guardarModulo('degustaciones')"><svg class="icon"><use href="#i-save"/></svg>Guardar Degustaciones</button></div>
+    </div>
+  </section>
+
+  <!-- PREMIOS -->
+  <section class="mod" data-mod="premios">
+    <div class="card">
+      <div class="card-head">
+        <div class="card-chip"><svg class="icon icon-lg"><use href="#i-gift"/></svg></div>
+        <div class="card-head-text"><div class="card-title">Obsequios entregados</div><div class="card-sub">Lo que le entregaste al consumidor en el punto</div></div>
+        <span class="saved-badge" id="badge-premios"><svg class="icon icon-sm"><use href="#i-check"/></svg>Guardado</span>
+      </div>
+      <div class="field" style="margin-bottom:0">
+        <label class="label label-req">¿Cuánto entregaste a los consumidores?</label>
+        <div class="info-banner" style="margin-bottom:10px">
+          <div class="info-banner-title"><svg class="icon icon-sm"><use href="#i-box"/></svg>Control de obsequios</div>
+          <div style="font-size:12.5px">Registra cuántos entregaste de <b>cada obsequio</b>, así haya sido 0.</div>
+        </div>
+        <div id="listaEntregaPremios"></div>
+      </div>
+
+      <div class="field" style="margin-top:16px"><label class="label" for="premiosObservaciones">Observaciones</label><textarea id="premiosObservaciones" class="textarea" placeholder="Notas sobre obsequios y entregas"></textarea></div>
+      <div class="field" style="margin-bottom:0"><label class="label">Foto del inventario de obsequios</label>
+        <div class="upload upload-mini" id="uploadPremios">
+          <input type="file" id="filePremios" accept="image/*" capture="environment">
+          <div id="defPremios"><div class="upload-ic"><svg class="icon"><use href="#i-camera"/></svg></div><div class="upload-t">Tomar / subir foto</div></div>
+          <div id="prevPremios" style="display:none"><img id="imgPremios" class="preview-img"><div class="preview-act"><button type="button" class="btn btn-outline btn-sm" onclick="event.stopPropagation();document.getElementById('filePremios').click()"><svg class="icon icon-sm"><use href="#i-upload"/></svg>Cambiar</button><button type="button" class="btn btn-danger btn-sm" onclick="event.stopPropagation();quitarFoto('premios')"><svg class="icon icon-sm"><use href="#i-trash"/></svg>Quitar</button></div></div>
+        </div>
+      </div>
+      <div class="save-row"><button class="btn btn-primary btn-block" onclick="guardarModulo('premios')"><svg class="icon"><use href="#i-save"/></svg>Guardar Obsequios</button></div>
+    </div>
+  </section>
+
+  <!-- VOZ DEL CONSUMIDOR -->
+  <section class="mod" data-mod="voz">
+    <div class="card">
+      <div class="card-head">
+        <div class="card-chip"><svg class="icon icon-lg"><use href="#i-chat"/></svg></div>
+        <div class="card-head-text"><div class="card-title">Voz del Consumidor</div><div class="card-sub">Comentarios y percepción</div></div>
+        <span class="saved-badge" id="badge-voz"><svg class="icon icon-sm"><use href="#i-check"/></svg>Guardado</span>
+      </div>
+      <div id="listaVoz"></div>
+      <button type="button" class="btn btn-soft btn-block" onclick="agregarVoz()"><svg class="icon icon-sm"><use href="#i-plus"/></svg>Agregar opinión</button>
+      <div class="save-row"><button class="btn btn-primary btn-block" onclick="guardarModulo('voz')"><svg class="icon"><use href="#i-save"/></svg>Guardar Voz del Consumidor</button></div>
+    </div>
+  </section>
+
+  <!-- ACTIVIDAD DE LA COMPETENCIA -->
+  <section class="mod" data-mod="competencia">
+    <div class="card">
+      <div class="card-head">
+        <div class="card-chip"><svg class="icon icon-lg"><use href="#i-search"/></svg></div>
+        <div class="card-head-text"><div class="card-title">Actividad de la Competencia</div><div class="card-sub">Evidencia fotográfica en el PDV</div></div>
+        <span class="saved-badge" id="badge-competencia"><svg class="icon icon-sm"><use href="#i-check"/></svg>Guardado</span>
+      </div>
+      <div class="field"><label class="label label-req">¿Hay actividad de la competencia en el punto?</label>
+        <div class="opt-grid opt-grid-2">
+          <div class="opt"><input type="radio" name="competenciaHayActividad" id="coSi" value="Si"><label for="coSi"><svg class="icon icon-sm chk"><use href="#i-check"/></svg>Sí</label></div>
+          <div class="opt"><input type="radio" name="competenciaHayActividad" id="coNo" value="No"><label for="coNo"><svg class="icon icon-sm chk"><use href="#i-check"/></svg>No</label></div>
+        </div>
+      </div>
+      <div id="competenciaSi" style="display:none">
+        <div id="listaCompetencia"></div>
+        <button type="button" class="btn btn-soft btn-block" onclick="agregarEvidenciaCompetencia()"><svg class="icon icon-sm"><use href="#i-plus"/></svg>Agregar evidencia</button>
+      </div>
+      <div class="save-row"><button class="btn btn-primary btn-block" onclick="guardarModulo('competencia')"><svg class="icon"><use href="#i-save"/></svg>Guardar Actividad de la Competencia</button></div>
+    </div>
+  </section>
+
+  <!-- SALIDA DEL PDV -->
+  <section class="mod" data-mod="salida">
+    <div class="card">
+      <div class="card-head">
+        <div class="card-chip"><svg class="icon icon-lg"><use href="#i-list"/></svg></div>
+        <div class="card-head-text"><div class="card-title">Salida del PDV</div><div class="card-sub">Revisa antes de finalizar</div></div>
+      </div>
+      <div id="resumenContenido"></div>
+      <div class="field" style="margin-top:8px"><label class="label label-req">Foto de salida (obligatoria)</label>
+        <div class="upload" id="uploadSalida">
+          <input type="file" id="fileSalida" accept="image/*" capture="environment">
+          <div id="defSalida"><div class="upload-ic"><svg class="icon icon-lg"><use href="#i-camera"/></svg></div><div class="upload-t">Toma o sube la foto de salida</div><div class="upload-h">JPG, PNG · Sin foto no se puede finalizar</div></div>
+          <div id="prevSalida" style="display:none"><img id="imgSalida" class="preview-img"><div class="preview-act"><button type="button" class="btn btn-outline btn-sm" onclick="event.stopPropagation();document.getElementById('fileSalida').click()"><svg class="icon icon-sm"><use href="#i-upload"/></svg>Cambiar</button><button type="button" class="btn btn-danger btn-sm" onclick="event.stopPropagation();quitarFoto('salida')"><svg class="icon icon-sm"><use href="#i-trash"/></svg>Quitar</button></div></div>
+        </div>
+      </div>
+      <div class="field"><label class="label" for="proximaVisita">Próxima visita programada</label><input type="date" id="proximaVisita" class="input"></div>
+      <div class="field"><label class="label" for="observacionesGenerales">Observaciones finales</label><textarea id="observacionesGenerales" class="textarea" placeholder="Compromisos y notas"></textarea></div>
+      <div style="display:flex;gap:10px;margin-top:6px">
+        <button type="button" class="btn btn-success" style="flex:1" onclick="compartirWhatsApp()"><svg class="icon"><use href="#i-chat"/></svg>WhatsApp</button>
+        <button type="button" class="btn btn-outline" style="flex:1" onclick="copiarGestion()"><svg class="icon"><use href="#i-copy"/></svg>Copiar</button>
+      </div>
+      <div class="save-row"><button class="btn btn-primary btn-block" onclick="guardarModulo('salida', true)"><svg class="icon"><use href="#i-check"/></svg>Finalizar gestión</button></div>
+    </div>
+  </section>
+
+</main>
+
+<!-- HOJA DE MÓDULOS -->
+<div class="modgrid-bd" id="modgridBd" onclick="closeModGrid()"></div>
+<div class="modgrid" id="modgrid">
+  <div class="modgrid-h">Módulos de la visita</div>
+  <div class="modgrid-grid" id="modgridGrid"></div>
+</div>
+
+<!-- HOJA DE SELECCIÓN DE PRODUCTO (con buscador) -->
+<div class="combosheet-bd" id="combosheetBd" onclick="cerrarCombo()"></div>
+<div class="combosheet" id="combosheet">
+  <div class="combosheet-h"><b id="combosheetTitulo">Selecciona</b><button type="button" class="combosheet-close" onclick="cerrarCombo()"><svg class="icon icon-sm"><use href="#i-x"/></svg></button></div>
+  <div class="combosheet-search"><svg class="icon"><use href="#i-search"/></svg><input type="text" id="comboSearch" placeholder="Buscar..." oninput="filtrarCombo()" autocomplete="off"></div>
+  <div class="combosheet-list" id="comboLista"></div>
+</div>
+
+<!-- BOTTOM NAV -->
+<nav class="bottomnav">
+  <div class="nav-side left"><button class="nav-icon" id="btnPersona" type="button" aria-label="Mi información"><svg class="icon"><use href="#i-user"/></svg></button></div>
+  <div class="fab-slot"><button class="fab" id="fab" type="button" aria-label="Navegar módulos"><span class="fab-ic"><svg class="icon icon-lg"><use href="#i-grid"/></svg></span></button></div>
+  <div class="nav-side right"><button class="nav-icon" id="btnSalir" type="button" aria-label="Cerrar sesión" title="Cerrar sesión" style="color:var(--error);border-color:var(--error-soft)"><svg class="icon"><use href="#i-logout"/></svg></button></div>
+</nav>
+
+<!-- MODAL PERSONA -->
+<div class="overlay" id="personaModal">
+  <div class="modal left">
+    <button class="modal-close" onclick="cerrarPersona()"><svg class="icon icon-sm"><use href="#i-x"/></svg></button>
+    <div class="modal-h"><svg class="icon"><use href="#i-user"/></svg>Mi información</div>
+    <div class="modal-p">Datos del asesor y del punto de venta</div>
+    <div class="res-line"><span class="rk">Nombre</span><span class="rv" id="pNombre">—</span></div>
+    <div class="res-line"><span class="rk">Documento</span><span class="rv" id="pDoc">—</span></div>
+    <div class="res-line"><span class="rk">Ciudad</span><span class="rv" id="pCiudad">—</span></div>
+    <div class="res-line"><span class="rk">Catálogo de venta</span><span class="rv" id="pCatalogo">—</span></div>
+    <div class="merc-chip" style="margin:16px 0"><div class="merc-ava"><svg class="icon"><use href="#i-pin"/></svg></div><div class="merc-info"><b>Punto de venta</b><span id="pPdvActual">—</span></div><button type="button" class="btn btn-outline btn-sm" onclick="cerrarPersona();reabrirPortada()"><svg class="icon icon-sm"><use href="#i-edit"/></svg>Cambiar</button></div>
+    <div class="merc-chip" style="margin:0"><div class="merc-ava"><svg class="icon"><use href="#i-id"/></svg></div><div class="merc-info"><b>Código de sesión</b><span id="pCodigoSesion">—</span></div><button type="button" class="btn btn-outline btn-sm" onclick="copiarCodigoSesion()"><svg class="icon icon-sm"><use href="#i-copy"/></svg>Copiar</button></div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"><svg class="icon icon-sm"><use href="#i-check"/></svg><span id="toastMsg"></span></div>
+
+<!-- OVERLAYS -->
+<div class="overlay" id="loadingOverlay"><div class="modal"><div class="spinner"></div><div class="modal-msg" id="loadingMsg">Guardando...</div></div></div>
+<div class="overlay" id="successModal"><div class="modal">
+  <div class="ok-ic"><svg class="icon icon-xl"><use href="#i-check"/></svg></div>
+  <div class="ok-title">Gestión finalizada</div>
+  <div class="ok-sub">Toda la información quedó registrada.</div>
+  <div class="ok-info" id="successInfo"></div>
+  <button class="btn btn-primary btn-block" onclick="nuevaGestion()"><svg class="icon"><use href="#i-plus"/></svg>Nueva gestión</button>
+</div></div>
+
+<!-- CÓDIGO DE SESIÓN -->
+<div class="overlay" id="codigoSesionModal"><div class="modal">
+  <div class="ok-ic"><svg class="icon icon-xl"><use href="#i-id"/></svg></div>
+  <div class="ok-title">Guarda tu código de sesión</div>
+  <div class="ok-sub">Si sales de la app, cambias de dispositivo o se borran tus datos locales, lo necesitarás para recuperar esta gestión.</div>
+  <div class="ok-info" id="codigoSesionTexto" style="font-size:16px;font-weight:700;text-align:center;letter-spacing:.5px"></div>
+  <div style="display:flex;gap:10px">
+    <button type="button" class="btn btn-outline" style="flex:1" onclick="copiarCodigoSesion()"><svg class="icon icon-sm"><use href="#i-copy"/></svg>Copiar</button>
+    <button type="button" class="btn btn-primary" style="flex:1" onclick="cerrarCodigoSesion()">Entendido</button>
+  </div>
+</div></div>
+
+<!-- RECUPERAR SESIÓN -->
+<div class="overlay" id="recuperarModal"><div class="modal">
+  <div class="modal-h" style="justify-content:center"><svg class="icon"><use href="#i-refresh"/></svg>Recuperar sesión</div>
+  <div class="modal-p" style="text-align:center">Ingresa el código de sesión que recibiste al iniciar tu gestión.</div>
+  <div class="field"><input type="text" id="codigoRecuperar" class="input" placeholder="Ej: MNV-20261201-153000-123" style="text-align:center"></div>
+  <div id="recuperarErr" style="display:none;color:var(--error);font-size:12.5px;margin-bottom:10px;text-align:center"></div>
+  <div style="display:flex;gap:10px">
+    <button type="button" class="btn btn-outline" style="flex:1" onclick="cerrarRecuperarSesion()">Cancelar</button>
+    <button type="button" class="btn btn-primary" style="flex:1" onclick="confirmarRecuperarSesion()">Recuperar</button>
+  </div>
+</div></div>
+
+<script>
+/* ==== CONFIGURA ESTO DESPUÉS DE DESPLEGAR EL APPS SCRIPT ==== */
+const GAS_URL = 'https://script.google.com/macros/s/AKfycbzaxhcLjyXpdKyZ-0sNqqSASZ7t3g0GY2em0vzN-iTXhL9cyK89bl8Bb1VputR1gVgN/exec';
+const LS_KEY = 'meiconavidad_session_v1';
+const LS_FOTOS = 'meiconavidad_fotos_v1';
+const SESION_MAX_MS = 16 * 60 * 60 * 1000;
+
+// ============================================================
+// RESILIENCIA: plataforma (SO/navegador), red inestable con cola offline
+// y cierre automático de sesión a las 11:00 p. m. (hora Colombia)
+// ============================================================
+
+// ===== PLATAFORMA =====
+const PLAT = (function(){
+  const ua = navigator.userAgent || '';
+  const tactil = (navigator.maxTouchPoints || 0) > 1;
+  let os = 'otro';
+  if (/android/i.test(ua)) os = 'android';
+  else if (/iPhone|iPad|iPod/i.test(ua) || (navigator.platform === 'MacIntel' && tactil)) os = 'ios'; /* iPadOS se anuncia como Mac */
+  else if (/windows/i.test(ua)) os = 'windows';
+  else if (/Mac OS X|Macintosh/i.test(ua)) os = 'mac';
+  else if (/Linux|CrOS/i.test(ua)) os = 'linux';
+  let navegador = 'otro';
+  if (/Edg(e|A|iOS)?\//.test(ua)) navegador = 'edge';
+  else if (/OPR\/|OPiOS/.test(ua)) navegador = 'opera';
+  else if (/SamsungBrowser/i.test(ua)) navegador = 'samsung';
+  else if (/Firefox|FxiOS/.test(ua)) navegador = 'firefox';
+  else if (/Chrome|CriOS/.test(ua)) navegador = 'chrome';
+  else if (/Safari/.test(ua)) navegador = 'safari';
+  // Navegadores integrados de otras apps (WhatsApp, Facebook, Instagram...): cámara/GPS/almacenamiento fallan más.
+  const enApp = /FBAN|FBAV|FB_IAB|Instagram|WhatsApp|Line\/|Snapchat|TikTok|MicroMessenger|; wv\)/i.test(ua) || (os === 'ios' && !/Safari\//.test(ua));
+  return { os: os, navegador: navegador, enApp: enApp, ios: os === 'ios', android: os === 'android' };
+})();
+const DISPOSITIVO = PLAT.os + '/' + PLAT.navegador + (PLAT.enApp ? ' (app integrada)' : '') + ' · ' + (window.screen ? screen.width + 'x' + screen.height : '?');
+
+function aplicarAjustesPlataforma(){
+  const cl = document.documentElement.classList;
+  cl.add('os-' + PLAT.os); cl.add('nav-' + PLAT.navegador);
+  if (PLAT.enApp) mostrarAvisoNavegadorIntegrado();
+  // Pide almacenamiento persistente para que el navegador no borre la cola/fotos pendientes si falta espacio.
+  try { if (navigator.storage && navigator.storage.persist) navigator.storage.persist(); } catch (e) {}
+  // iOS (Safari) y Android descartan las pestañas en segundo plano: se guarda todo al ocultar/cerrar.
+  const guardarYa = function(){
+    if (!window._comenzando && !registroId) return; /* sin sesión iniciada no se persiste nada */
+    try { persistir(); persistirFotos(); } catch (e) {}
+  };
+  document.addEventListener('visibilitychange', function(){
+    if (document.visibilityState === 'hidden') guardarYa();
+    else { vaciarOutbox(false); verificarCorteNocturno(); }
+  });
+  window.addEventListener('pagehide', guardarYa);
+}
+function mostrarAvisoNavegadorIntegrado(){
+  const d = document.createElement('div');
+  d.style.cssText = 'position:fixed;left:8px;right:8px;bottom:calc(env(safe-area-inset-bottom,0px) + 84px);z-index:99998;background:#fff3cd;color:#664d03;border:1px solid #ffda6a;border-radius:12px;padding:10px 12px;font-size:12.5px;line-height:1.35;box-shadow:0 4px 14px rgba(0,0,0,.18)';
+  d.innerHTML = '<b>Estás en el navegador integrado de otra app.</b> La cámara, el GPS y el envío pueden fallar. Abre este enlace en <b>' + (PLAT.ios ? 'Safari' : 'Chrome') + '</b> (menú ⋮ o compartir → "Abrir en el navegador").<button type="button" style="float:right;margin-left:8px;border:0;background:transparent;font-size:16px;color:inherit" aria-label="Cerrar aviso">✕</button>';
+  d.querySelector('button').onclick = function(){ d.remove(); };
+  document.body.appendChild(d);
+}
+
+// ===== RED: timeouts y detección de señal débil =====
+function conexionInfo(){ return navigator.connection || navigator.mozConnection || navigator.webkitConnection || null; }
+function sinRed(){ return navigator.onLine === false; }
+function redMuyLenta(){ const c = conexionInfo(); return !!(c && (c.effectiveType === 'slow-2g' || c.effectiveType === '2g')); }
+let fallasSeguidas = 0, ultimaFalla = 0;
+/* Red "inestable": sin conexión, 2G, o dos fallos seguidos hace menos de 45 s (intermitencia). */
+function redInestable(){ return sinRed() || redMuyLenta() || (fallasSeguidas >= 2 && (Date.now() - ultimaFalla) < 45000); }
+
+function fetchConTimeout(url, opts, ms){
+  return new Promise(function(resolve, reject){
+    let ctrl = null;
+    if (typeof AbortController !== 'undefined') { ctrl = new AbortController(); opts = Object.assign({}, opts, { signal: ctrl.signal }); }
+    const t = setTimeout(function(){ if (ctrl) { try { ctrl.abort(); } catch (e) {} } reject(new Error('Tiempo de espera agotado (señal lenta)')); }, ms);
+    fetch(url, opts).then(function(r){ clearTimeout(t); resolve(r); }, function(e){ clearTimeout(t); reject(e); });
+  });
+}
+const ERROR_TRANSITORIO = /lock|tiempo de espera|timeout|Service invoked too many|Service unavailable|try again/i;
+
+/* Un solo intento de envío. Devuelve {ok,data} | {validacion,error} (el backend lo rechazó: reintentar no sirve) | {red,error}. */
+async function intentarEnvio(payload, maxTimeoutMs){
+  const body = JSON.stringify(payload);
+  const ms = Math.min(maxTimeoutMs || 45000, 20000 + Math.round(body.length / 30));
+  try {
+    const res = await fetchConTimeout(GAS_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: body, redirect: 'follow' }, ms);
+    const data = await res.json(); /* si el operador devuelve HTML en vez de JSON, lanza y cae al catch como falla de red */
+    if (data && data.success) { fallasSeguidas = 0; return { ok: true, data: data }; }
+    const msg = (data && data.error) || 'desconocido';
+    if (ERROR_TRANSITORIO.test(msg)) return { ok: false, red: true, error: msg };
+    fallasSeguidas = 0;
+    return { ok: false, validacion: true, error: msg };
+  } catch (err) {
+    fallasSeguidas++; ultimaFalla = Date.now();
+    return { ok: false, red: true, error: (err && err.message) ? err.message : String(err) };
+  }
+}
+
+/* Todos los envíos (directos y de la cola) pasan por una sola fila: así nunca llega una versión vieja después de una nueva. */
+let cadenaEnvio = Promise.resolve();
+function enSerie(fn){ const p = cadenaEnvio.then(fn, fn); cadenaEnvio = p.catch(function(){}); return p; }
+
+function generarRegistroId(){
+  const d = new Date(), n = function(x){ return x < 10 ? '0' + x : '' + x; };
+  return 'MNV-' + d.getFullYear() + n(d.getMonth() + 1) + n(d.getDate()) + '-' + n(d.getHours()) + n(d.getMinutes()) + n(d.getSeconds()) + '-' + Math.floor(Math.random() * 1000);
+}
+
+/* Envía; si la red está mala o falla, deja la gestión en la cola del celular para enviarla sola después. */
+function enviarGestionResiliente(payload, finalizar){
+  payload.clientTs = Date.now();
+  return enSerie(async function(){
+    if (!redInestable()) {
+      for (let i = 1; i <= 2; i++) {
+        const r = await intentarEnvio(payload, 45000);
+        if (r.ok) { await outboxDel(payload.registroId); return r; }
+        if (r.validacion) return r;
+        if (i < 2) await esperar(1200);
+      }
+    }
+    const guardado = await outboxPut({ registroId: payload.registroId, payload: payload, finalizar: !!finalizar, creado: Date.now(), rechazos: 0 });
+    return guardado ? { ok: false, encolado: true } : { ok: false, sinAlmacenamiento: true };
+  });
+}
+
+// ===== COLA OFFLINE (IndexedDB, con respaldo en localStorage) =====
+const OB_DB = 'meiconavidad_outbox_v1', OB_STORE = 'cola', OB_LS = 'meiconavidad_outbox_ls_v1';
+let _obDB = null, _obFallo = false;
+function obAbrir(){
+  return new Promise(function(resolve){
+    if (_obDB) return resolve(_obDB);
+    if (_obFallo || !window.indexedDB) return resolve(null);
+    let req; try { req = indexedDB.open(OB_DB, 1); } catch (e) { _obFallo = true; return resolve(null); }
+    req.onupgradeneeded = function(){ req.result.createObjectStore(OB_STORE, { keyPath: 'registroId' }); };
+    req.onsuccess = function(){ _obDB = req.result; _obDB.onclose = function(){ _obDB = null; }; resolve(_obDB); };
+    req.onerror = req.onblocked = function(){ _obFallo = true; resolve(null); };
+  });
+}
+function idbReq(req){ return new Promise(function(res, rej){ req.onsuccess = function(){ res(req.result); }; req.onerror = function(){ rej(req.error); }; }); }
+function obLeerLS(){ try { return JSON.parse(localStorage.getItem(OB_LS) || '[]'); } catch (e) { return []; } }
+function obEscribirLS(arr){ try { localStorage.setItem(OB_LS, JSON.stringify(arr)); return true; } catch (e) { return false; } }
+
+async function outboxAll(){
+  const db = await obAbrir();
+  if (db) { try { return await idbReq(db.transaction(OB_STORE).objectStore(OB_STORE).getAll()); } catch (e) {} }
+  return obLeerLS();
+}
+async function outboxGet(id){
+  const db = await obAbrir();
+  if (db) { try { return (await idbReq(db.transaction(OB_STORE).objectStore(OB_STORE).get(id))) || null; } catch (e) {} }
+  return obLeerLS().filter(function(x){ return x.registroId === id; })[0] || null;
+}
+async function outboxPutRaw(item){
+  const db = await obAbrir();
+  if (db) { try { await idbReq(db.transaction(OB_STORE, 'readwrite').objectStore(OB_STORE).put(item)); return true; } catch (e) {} }
+  const arr = obLeerLS().filter(function(x){ return x.registroId !== item.registroId; }); arr.push(item);
+  return obEscribirLS(arr);
+}
+/* Una entrada por visita: la gestión se manda completa en cada guardado, así que la más nueva reemplaza a la anterior. */
+async function outboxPut(item){
+  const previo = await outboxGet(item.registroId);
+  if (previo && previo.finalizar) item.finalizar = true;
+  const ok = await outboxPutRaw(item);
+  actualizarPill();
+  return ok;
+}
+async function outboxDel(id){
+  const db = await obAbrir();
+  if (db) { try { await idbReq(db.transaction(OB_STORE, 'readwrite').objectStore(OB_STORE).delete(id)); } catch (e) {} }
+  const arr = obLeerLS(); if (arr.length) obEscribirLS(arr.filter(function(x){ return x.registroId !== id; }));
+  actualizarPill();
+}
+
+/* Procesa la cola cuando hay mejor red. Un fallo de red corta el ciclo; se reintenta solo (online, timer, volver a la app). */
+let vaciando = false;
+async function vaciarOutbox(forzar){
+  if (vaciando || sinRed()) return;
+  if (!forzar && redMuyLenta()) return;
+  vaciando = true;
+  try {
+    const ids = (await outboxAll()).filter(function(x){ return !x.muerto; }).map(function(x){ return x.registroId; });
+    for (let k = 0; k < ids.length; k++) {
+      const id = ids[k];
+      const r = await enSerie(async function(){
+        const it = await outboxGet(id); /* se relee: pudo reemplazarse por una versión más nueva mientras esperaba */
+        if (!it || it.muerto) return { omitido: true };
+        const rr = await intentarEnvio(it.payload, 60000);
+        if (rr.ok) { await outboxDel(id); aplicarRespuestaEnviada(it.payload, rr.data, true); }
+        else if (rr.validacion) {
+          it.rechazos = (it.rechazos || 0) + 1; it.ultimoError = rr.error;
+          if (it.rechazos >= 3) it.muerto = true; /* el backend la rechaza una y otra vez: no se reintenta infinito */
+          await outboxPutRaw(it);
+        }
+        return rr;
+      });
+      if (r && r.red) break;
+    }
+  } finally { vaciando = false; actualizarPill(); }
+}
+
+/* Aplica lo que devolvió el servidor (URLs de fotos) si la visita enviada es la que está abierta. */
+function aplicarRespuestaEnviada(payload, data, desdeCola){
+  if (!data) return;
+  if (data.registroId && data.registroId === registroId) {
+    const g = (payload && payload.gestion) || {};
+    if (data.fotoIngresoURL) { fotoIngresoURL = data.fotoIngresoURL; if (fotoIngreso === g.fotoIngreso) fotoIngreso = ''; }
+    if (data.fotoSalidaURL) { fotoSalidaURL = data.fotoSalidaURL; if (fotoSalida === g.fotoSalida) fotoSalida = ''; }
+    persistir(); persistirFotos();
+  }
+  if (desdeCola) {
+    const info = document.getElementById('successInfo');
+    if (info && info.textContent.indexOf(data.registroId) !== -1) info.textContent = 'Registro: ' + data.registroId + ' ✓ enviado';
+    toast('Gestión pendiente enviada ✓');
+  }
+}
+
+/* Indicador flotante de gestiones pendientes de envío (toca para reintentar ya). */
+let _pillEl = null;
+async function actualizarPill(){
+  if (!_pillEl) {
+    _pillEl = document.createElement('button');
+    _pillEl.type = 'button';
+    _pillEl.style.cssText = 'position:fixed;top:calc(env(safe-area-inset-top,0px) + 8px);right:8px;z-index:99997;display:none;border:0;border-radius:999px;padding:7px 12px;font-size:12px;font-weight:700;color:#fff;background:#d97706;box-shadow:0 3px 10px rgba(0,0,0,.25)';
+    _pillEl.onclick = async function(){ toast(sinRed() ? 'Sin conexión: se enviará solo al volver la señal' : 'Reintentando envío...', sinRed()); await vaciarOutbox(true); };
+    document.body.appendChild(_pillEl);
+  }
+  let items = []; try { items = await outboxAll(); } catch (e) {}
+  const vivos = items.filter(function(x){ return !x.muerto; }).length;
+  const muertos = items.length - vivos;
+  if (vivos > 0) { _pillEl.style.display = 'block'; _pillEl.style.background = '#d97706'; _pillEl.textContent = '⏳ ' + vivos + ' pendiente' + (vivos > 1 ? 's' : '') + ' por enviar'; }
+  else if (muertos > 0) { _pillEl.style.display = 'block'; _pillEl.style.background = '#dc2626'; _pillEl.textContent = '⚠️ ' + muertos + ' envío(s) con error · avisa a tu supervisor'; }
+  else _pillEl.style.display = 'none';
+}
+
+function iniciarResiliencia(){
+  aplicarAjustesPlataforma();
+  window.addEventListener('online', function(){ setTimeout(function(){ vaciarOutbox(false); }, 1500); });
+  const c = conexionInfo(); if (c && c.addEventListener) c.addEventListener('change', function(){ vaciarOutbox(false); });
+  setInterval(function(){ vaciarOutbox(false); }, 20000);
+  setInterval(verificarCorteNocturno, 30000);
+  actualizarPill(); vaciarOutbox(false);
+}
+
+// ===== CIERRE AUTOMÁTICO DE SESIÓN: 11:00 p. m. (hora de Colombia, UTC-5 sin horario de verano) =====
+const CORTE_HORA = 23, LS_LOGOUT_MSG = 'meiconavidad_logout_msg';
+let inicioSesion = 0, cerrandoNocturno = false, avisoCorteMostrado = false;
+function ultimoCorte(ahora){
+  const OFF = 5 * 3600000;
+  const s = new Date(ahora - OFF); /* reloj de Bogotá leído con getUTC* */
+  let c = Date.UTC(s.getUTCFullYear(), s.getUTCMonth(), s.getUTCDate(), CORTE_HORA, 0, 0);
+  if (c > ahora - OFF) c -= 86400000;
+  return c + OFF;
+}
+function proximoCorte(ahora){ return ultimoCorte(ahora) + 86400000; }
+function verificarCorteNocturno(){
+  if (!inicioSesion || !(window._comenzando || registroId)) return;
+  const ahora = Date.now();
+  if (inicioSesion < ultimoCorte(ahora)) { cierreAutomaticoNocturno(); return; }
+  if (!avisoCorteMostrado && proximoCorte(ahora) - ahora <= 5 * 60000) {
+    avisoCorteMostrado = true;
+    toast('⏰ Tu sesión se cerrará automáticamente a las 11:00 p. m. Guarda tu gestión.', true, 6000);
+  }
+}
+async function cierreAutomaticoNocturno(){
+  if (cerrandoNocturno) return; cerrandoNocturno = true;
+  /* Antes de cerrar se intenta enviar lo pendiente. Lo que no salga queda en la cola del celular y se envía luego. */
+  try { await Promise.race([vaciarOutbox(true), esperar(15000)]); } catch (e) {}
+  limpiarSesionLocal();
+  try { localStorage.setItem(LS_LOGOUT_MSG, String(Date.now())); } catch (e) {}
+  location.reload();
+}
+function mostrarMensajeCierreNocturno(){
+  let t = null; try { t = localStorage.getItem(LS_LOGOUT_MSG); localStorage.removeItem(LS_LOGOUT_MSG); } catch (e) {}
+  if (t && (Date.now() - Number(t)) < 12 * 3600000) setTimeout(function(){ toast('Tu sesión se cerró automáticamente a las 11:00 p. m. Inicia sesión de nuevo.', true, 6000); }, 600);
+}
+const PARAM_CACHE_KEY = 'meiconavidad_param_cache_v1';
+const PARAM_CACHE_TTL_MS = 5 * 60 * 1000; /* igual al TTL del caché del backend */
+
+const MODS = [
+  {id:'ingreso',     icon:'i-pin',    label:'Ingreso',     gate:false},
+  {id:'ventas',      icon:'i-cart',   label:'Ventas',      gate:true},
+  {id:'degustaciones', icon:'i-wine', label:'Degustación', gate:true},
+  {id:'premios',     icon:'i-gift',   label:'Obsequios',   gate:true},
+  {id:'voz',         icon:'i-chat',   label:'Voz Cons.',   gate:true},
+  {id:'competencia', icon:'i-search', label:'Competencia', gate:true},
+  {id:'salida',      icon:'i-list',   label:'Salida',      gate:true}
+];
+
+// Voz del Consumidor: encuesta completa, con opciones de un toque (emoji) para responder rápido
+const TIPO_PRODUCTO_PREFERIDO = [ {v:'Espumoso',e:'🍾'}, {v:'Burbujeante / Lambrusco',e:'✨'}, {v:'Tinto',e:'🍷'}, {v:'Blanco',e:'🥂'}, {v:'Rosé',e:'🌹'}, {v:'Otro',e:'❔'} ];
+const CONOCE_MARCA = [ {v:'Sí la conocía',e:'👀'}, {v:'No la conocía',e:'🆕'} ];
+const USO_MARCA = [ {v:'La toma actualmente',e:'🙋'}, {v:'La ha probado antes',e:'🕓'}, {v:'Nunca la ha probado',e:'🚫'} ];
+const OPINION_PRODUCTOS = [ {v:1,e:'😞',l:'Muy mala'}, {v:2,e:'🙁',l:'Mala'}, {v:3,e:'😐',l:'Regular'}, {v:4,e:'😊',l:'Buena'}, {v:5,e:'🤩',l:'Excelente'} ];
+const PERCEPCION_PUNTO = [ {v:'No le gustó',e:'🙁'}, {v:'Ni fu ni fa',e:'😐'}, {v:'Le gustó',e:'🙂'}, {v:'Le encantó',e:'🤩'} ];
+const ATRIBUTOS_DESEADOS = [ {v:'Mejor precio',e:'💰'}, {v:'Mejor sabor',e:'👅'}, {v:'Maridaje / recomendaciones',e:'🍽️'}, {v:'Empaque / estuche de regalo',e:'🎁'}, {v:'Promociones y combos',e:'🏷️'}, {v:'Mayor disponibilidad',e:'🛒'} ];
+const CANALES_CONOCIMIENTO = [ {v:'TV',e:'📺'}, {v:'Redes sociales',e:'📱'}, {v:'Revistas',e:'📖'}, {v:'Radio',e:'📻'}, {v:'Punto de venta',e:'🏬'}, {v:'Recomendación',e:'🗣️'}, {v:'Otro',e:'❔'} ];
+const TIPOS_CABELLO = ['Cena de Navidad','Año Nuevo','Para regalar','Reunión familiar','Celebración','Consumo habitual'];
+const EDADES = ['18-25','26-35','36-45','46-55','56+'];
+const GENEROS = ['Femenino','Masculino','Prefiere no decir'];
+const TIPOS_ACTIVIDAD_COMPETENCIA = ['Exhibición especial','Descuento / Promoción','Degustación / Impulso','Mercaderista en el punto','Otro'];
+
+let parametrizacion = { pdvs:[], pdvCiudad:{}, pdvsPorCiudad:{}, skus:[], degustaciones:[], premios:[] };
+let todosLosUsuarios = [];
+let modoManual = false;
+let registroId = '';
+let saved = {};
+let current = 'ingreso';
+let modgridOpen = false, restaurando = false;
+let ubicacion = { lat:null, lng:null, acc:null };
+let esUsuarioEspecial = false;
+let fotoIngreso = '', fotoIngresoURL = '';
+let fotoSalida = '', fotoSalidaURL = '';
+let fotoPremios = '', fotoPremiosURL = '';
+let ventasList = [], degustacionesList = [], vozList = [], competenciaList = [], premiosEntregados = [];
+let asesorSel = { nombre:'', documento:'', telefono:'' };
+let pendAsesorNombre = null, pendPDV = null, pendCiudad = null;
+let registroPromise = null;
+
+// ===== INIT =====
+document.addEventListener('DOMContentLoaded', () => {
+  const ahora = new Date();
+  document.getElementById('heroDate').textContent = ahora.toLocaleDateString('es-CO',{weekday:'long',day:'numeric',month:'long'});
+
+  iniciarResiliencia();
+  mostrarMensajeCierreNocturno();
+  cargarParametrizacion();
+
+  document.querySelectorAll('input[name="ventaRealizada"]').forEach(r => r.addEventListener('change', onVentaChange));
+  document.querySelectorAll('input[name="competenciaHayActividad"]').forEach(r => r.addEventListener('change', onCompetenciaChange));
+  document.querySelectorAll('input[name="degustacionRealizada"]').forEach(r => r.addEventListener('change', onDegustacionChange));
+  document.getElementById('fileIngreso').addEventListener('change', e => leerFotoSimple(e, 'ingreso'));
+  document.getElementById('fileSalida').addEventListener('change', e => leerFotoSimple(e, 'salida'));
+  document.getElementById('filePremios').addEventListener('change', e => leerFotoSimple(e, 'premios'));
+
+  let pt; const persistDeb = () => { clearTimeout(pt); pt=setTimeout(persistir, 600); };
+  document.addEventListener('input', persistDeb);
+  document.addEventListener('change', persistDeb);
+
+  document.querySelector('.bottomnav').addEventListener('click', e => {
+    if (e.target.closest('#fab')) toggleModGrid();
+    else if (e.target.closest('#btnPersona')) abrirPersona();
+    else if (e.target.closest('#btnSalir')) cerrarSesion();
+  });
+
+  document.getElementById('comboLista').addEventListener('click', e => {
+    const item = e.target.closest('.combo-item'); if (!item) return;
+    seleccionarCombo(item.dataset.value);
+  });
+
+  if (!restaurarSesion()) renderNav();
+});
+
+// ===== NAV =====
+function puedeNavegar(id){ return id==='ingreso' || !!saved['ingreso']; }
+function goTo(id){
+  if(!puedeNavegar(id)){ toast('Completa el Ingreso (con foto) para desbloquear los demás módulos', true); return; }
+  current=id; renderNav(); closeModGrid(); if(id==='salida') renderResumen();
+}
+function renderNav(){
+  document.querySelectorAll('.mod').forEach(el => el.classList.toggle('active', el.dataset.mod===current));
+  const a = MODS.map(m=>m.id);
+  const meta = MODS.find(m=>m.id===current);
+  document.getElementById('stepPill').textContent = meta ? meta.label : '';
+  document.getElementById('progress').innerHTML = a.map(id => '<span class="' + (id===current?'cur':(saved[id]?'done':'')) + '"></span>').join('');
+  MODS.forEach(m => { const b=document.getElementById('badge-'+m.id); if(b) b.classList.toggle('on', !!saved[m.id]); });
+  renderModGrid();
+  window.scrollTo(0, 0);
+}
+function renderModGrid(){
+  const cont=document.getElementById('modgridGrid'); if(!cont) return;
+  cont.innerHTML = MODS.map(m=>{
+    const locked = m.gate && !saved['ingreso'];
+    const active = m.id===current;
+    const done = !!saved[m.id];
+    let badge='';
+    if(done) badge='<span class="modgrid-check"><svg class="icon"><use href="#i-check"/></svg></span>';
+    else if(locked) badge='<span class="modgrid-check" style="background:var(--muted)"><svg class="icon"><use href="#i-lock"/></svg></span>';
+    return '<div class="modgrid-item'+(active?' active':'')+(locked?' locked':'')+'" onclick="goTo(\''+m.id+'\')">'+badge+
+      '<div class="modgrid-ic"><svg class="icon"><use href="#'+m.icon+'"/></svg></div>'+
+      '<div class="modgrid-lbl">'+m.label+'</div></div>';
+  }).join('');
+}
+function toggleModGrid(){ modgridOpen?closeModGrid():openModGrid(); }
+function openModGrid(){ modgridOpen=true; document.getElementById('modgrid').classList.add('open'); document.getElementById('modgridBd').classList.add('open'); document.getElementById('fab').classList.add('spin'); renderModGrid(); }
+function closeModGrid(){ modgridOpen=false; document.getElementById('modgrid').classList.remove('open'); document.getElementById('modgridBd').classList.remove('open'); document.getElementById('fab').classList.remove('spin'); }
+
+function onIdentChange(){
+  const n=getAsesorNombre();
+  document.getElementById('heroGreet').textContent = n ? ('Hola, '+n.split(' ')[0]) : 'Hola';
+  const mn=document.getElementById('mercNombre'), md=document.getElementById('mercDoc'), mp=document.getElementById('mercPdv'), mc=document.getElementById('mercCiudad');
+  if(mn) mn.textContent = n || '—';
+  if(md) md.textContent = getAsesorDocumento() ? ('Documento '+getAsesorDocumento()) : '—';
+  if(mp) mp.textContent = getPDV() || '—';
+  if(mc) mc.textContent = getCiudad() ? ('Ciudad: '+getCiudad()) : 'Punto de venta';
+  actualizarUsuarioEspecial();
+}
+
+// ===== USUARIO ESPECIAL (catálogo de ventas) =====
+// Decisión por LISTA (de dónde salió el asesor seleccionado: "Usuarios" o "Usuarios
+// Especiales"), no por una segunda búsqueda del documento. asesorSel.especial ya viene
+// marcado correctamente desde cargarAsesores()/onAsesorChange() según esa lista, así
+// que es la única fuente de verdad aquí — evita que un documento repetido o mal
+// tipeado entre las dos hojas mezcle los catálogos (11 SKU vs SKU Pro).
+function actualizarUsuarioEspecial(){
+  esUsuarioEspecial = false;
+  const chip = document.getElementById('chipCatalogo');
+  const pCat = document.getElementById('pCatalogo');
+  const texto = 'Vinos Meico ('+((parametrizacion.skus||[]).length)+' referencias)';
+  if(chip) chip.textContent = texto;
+  if(pCat) pCat.textContent = texto;
+}
+
+// ===== PORTADA =====
+function comenzar(){
+  if(window._comenzando) return;
+  const n=getAsesorNombre(), pdv=getPDV(), doc=getAsesorDocumento();
+  if(!n || n.length<5 || !doc || doc.length<5 || !pdv){
+    const f=document.getElementById('portadaForm');
+    f.classList.remove('shake'); void f.offsetWidth; f.classList.add('shake');
+    document.getElementById('portadaErr').style.display='block';
+    return;
+  }
+  window._comenzando=true;
+  inicioSesion=Date.now(); avisoCorteMostrado=false;
+  document.getElementById('portadaErr').style.display='none';
+  onIdentChange();
+  capturarUbicacion();
+  const p=document.getElementById('portada');
+  p.classList.add('hide');
+  window._portadaTimer=setTimeout(()=>{ p.style.display='none'; },650);
+  persistir(); persistirFotos();
+  registroPromise=guardarSilencioso();
+}
+function reabrirPortada(){
+  window._comenzando=false;
+  clearTimeout(window._portadaTimer);
+  const p=document.getElementById('portada');
+  p.style.display='flex';
+  requestAnimationFrame(()=>p.classList.remove('hide'));
+}
+async function guardarSilencioso(){
+  try{
+    const eraNuevo=!registroId;
+    const gestion=recolectarGestion();
+    const res=await fetch(GAS_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({registroId:registroId,gestion:gestion}),redirect:'follow'});
+    const data=await res.json();
+    if(data&&data.success){ registroId=data.registroId||registroId; persistir(); if(eraNuevo) mostrarCodigoSesion(); }
+  }catch(e){ /* sin foto todavía o sin conexión: se guardará al guardar el módulo Ingreso */ }
+}
+
+// ===== CÓDIGO DE SESIÓN =====
+function mostrarCodigoSesion(){
+  const el=document.getElementById('codigoSesionTexto'); if(el) el.textContent=registroId;
+  document.getElementById('codigoSesionModal').classList.add('show');
+}
+function cerrarCodigoSesion(){ document.getElementById('codigoSesionModal').classList.remove('show'); }
+function copiarCodigoSesion(){
+  if(!registroId){ toast('Aún no hay código de sesión', true); return; }
+  if(navigator.clipboard&&navigator.clipboard.writeText){ navigator.clipboard.writeText(registroId).then(()=>toast('Código copiado')).catch(()=>fallbackCopy(registroId)); }
+  else fallbackCopy(registroId);
+}
+
+// ===== RECUPERAR SESIÓN =====
+function abrirRecuperarSesion(){
+  document.getElementById('codigoRecuperar').value='';
+  document.getElementById('recuperarErr').style.display='none';
+  document.getElementById('recuperarModal').classList.add('show');
+}
+function cerrarRecuperarSesion(){ document.getElementById('recuperarModal').classList.remove('show'); }
+async function confirmarRecuperarSesion(){
+  const codigo=document.getElementById('codigoRecuperar').value.trim();
+  const errBox=document.getElementById('recuperarErr');
+  if(!codigo){ errBox.textContent='Ingresa el código de sesión.'; errBox.style.display='block'; return; }
+  mostrarLoading('Recuperando sesión...');
+  try{
+    const res=await fetchConTimeout(GAS_URL+'?action=recuperar&registroId='+encodeURIComponent(codigo),{redirect:'follow'},25000);
+    const data=await res.json();
+    ocultarLoading();
+    if(data&&data.success){
+      aplicarGestionRemota(data.registroId, data.gestion||{});
+      cerrarRecuperarSesion();
+      toast('Sesión recuperada correctamente');
+    } else {
+      errBox.textContent=(data&&data.error)||'No se encontró esa sesión.';
+      errBox.style.display='block';
+    }
+  }catch(err){
+    ocultarLoading();
+    errBox.textContent='Error de conexión: '+err.message;
+    errBox.style.display='block';
+  }
+}
+function aplicarGestionRemota(registroIdRecuperado, g){
+  restaurando=true;
+  inicioSesion=Date.now(); avisoCorteMostrado=false; window._comenzando=true;
+  registroId=registroIdRecuperado;
+  asesorSel={nombre:g.asesorNombre||'',documento:g.asesorDocumento||'',telefono:g.asesorTelefono||''};
+  pendAsesorNombre=g.asesorNombre||''; pendPDV=g.puntoVenta||''; pendCiudad=g.ciudad||'';
+  setIdentidad(g.asesorNombre||asesorSel.nombre, g.asesorDocumento||asesorSel.documento);
+  if(modoManual){
+    document.getElementById('ciudadTexto').value=pendCiudad;
+    document.getElementById('pdvTexto').value=pendPDV;
+  } else { aplicarPendAsesorPDV(); }
+  setRadio('ventaRealizada', g.ventaRealizada); onVentaChange();
+  if(g.ventaMotivoNo!=null){ const el=document.getElementById('ventaMotivoNo'); if(el) el.value=g.ventaMotivoNo; }
+  setRadio('competenciaHayActividad', g.competenciaHayActividad); onCompetenciaChange();
+  setRadio('degustacionRealizada', g.degustacionRealizada); onDegustacionChange();
+  if(g.degustacionMotivoNo!=null){ const el=document.getElementById('degustacionMotivoNo'); if(el) el.value=g.degustacionMotivoNo; }
+  document.getElementById('degustacionImpactos').value=(g.degustacionImpactos!=null?g.degustacionImpactos:'');
+  document.getElementById('degustacionObservaciones').value=g.degustacionObservaciones||'';
+  const darId=list=>(list||[]).map(it=>Object.assign({id:uid('r')},it));
+  ventasList=darId(g.ventaProductos); degustacionesList=darId(g.degustacionProductos); vozList=darId(g.vozConsumidor); competenciaList=darId(g.competenciaEvidencias);
+  premiosEntregados = Array.isArray(g.premiosEntregados) ? g.premiosEntregados.slice() : [];
+  renderVentas(); renderDegustaciones(); renderVoz(); renderCompetencia(); renderEntregaPremios();
+  document.getElementById('premiosObservaciones').value=g.premiosObservaciones||'';
+  fotoIngreso=''; fotoIngresoURL=g.fotoIngresoURL||''; aplicarFoto('ingreso', fotoIngresoURL);
+  fotoSalida=''; fotoSalidaURL=g.fotoSalidaURL||''; aplicarFoto('salida', fotoSalidaURL);
+  fotoPremios=''; fotoPremiosURL=g.fotoPremiosURL||''; aplicarFoto('premios', fotoPremiosURL);
+  ubicacion = { lat:g.latitud||null, lng:g.longitud||null, acc:g.precisionGPS||null };
+  aplicarUbicacionUI();
+  document.getElementById('observacionesGenerales').value=g.observacionesGenerales||'';
+  document.getElementById('proximaVisita').value=g.proximaVisita||'';
+  saved={}; (g.modulosGuardados||'').split(',').map(s=>s.trim()).filter(Boolean).forEach(id=>{ saved[id]=true; });
+  current='ingreso';
+  onIdentChange();
+  const p=document.getElementById('portada'); clearTimeout(window._portadaTimer); p.classList.add('hide'); p.style.display='none';
+  renderNav();
+  restaurando=false;
+  persistir();
+}
+
+// ===== ASESOR / PDV (portada) =====
+function setIdentidad(nombre, documento){
+  document.getElementById('asesorNombreTexto').value=nombre||'';
+  document.getElementById('asesorDocumentoTexto').value=documento||'';
+  asesorSel={nombre:nombre||'',documento:documento||'',telefono:''};
+}
+function onPdvChange(){ onIdentChange(); }
+function onCiudadChange(){ cargarPDVsPorCiudad(getCiudad()); onIdentChange(); }
+function activarModoSelect(){
+  document.getElementById('ciudad').style.display='';
+  document.getElementById('puntoVenta').style.display='';
+  document.getElementById('ciudadTexto').style.display='none';
+  document.getElementById('pdvTexto').style.display='none';
+}
+function activarModoManual(msg){
+  modoManual=true;
+  document.getElementById('ciudad').style.display='none';
+  document.getElementById('puntoVenta').style.display='none';
+  document.getElementById('ciudadTexto').style.display='';
+  document.getElementById('pdvTexto').style.display='';
+  document.getElementById('alertParamMsg').textContent=msg;
+  document.getElementById('alertParam').style.display='flex';
+  if(pendCiudad!=null) document.getElementById('ciudadTexto').value=pendCiudad;
+  if(pendPDV!=null) document.getElementById('pdvTexto').value=pendPDV;
+}
+function ocultarAlertaParam(){ document.getElementById('alertParam').style.display='none'; }
+function getAsesorNombre(){ return val('asesorNombreTexto').replace(/\s+/g,' '); }
+function getAsesorDocumento(){ return val('asesorDocumentoTexto').replace(/[^0-9]/g,''); }
+function getAsesorTelefono(){ return ''; }
+function getCiudad(){ return modoManual?val('ciudadTexto'):document.getElementById('ciudad').value.trim(); }
+function getPDV(){ return modoManual?val('pdvTexto'):document.getElementById('puntoVenta').value.trim(); }
+function aplicarPendAsesorPDV(){
+  const ciudadObjetivo = pendCiudad || (pendPDV ? (parametrizacion.pdvCiudad||{})[pendPDV] : '') || '';
+  if(ciudadObjetivo){
+    const cs=document.getElementById('ciudad');
+    if(cs && cs.querySelector('option[value="'+(window.CSS&&CSS.escape?CSS.escape(ciudadObjetivo):ciudadObjetivo)+'"]')){
+      cs.value=ciudadObjetivo;
+      cargarPDVsPorCiudad(ciudadObjetivo);
+    }
+  }
+  if(pendPDV){ const s=document.getElementById('puntoVenta'); if(s && s.querySelector('option[value="'+(window.CSS&&CSS.escape?CSS.escape(pendPDV):pendPDV)+'"]')){ s.value=pendPDV; } }
+  onIdentChange();
+}
+
+// ===== UBICACIÓN GPS =====
+function capturarUbicacion(){
+  const t=document.getElementById('locTitle'), d=document.getElementById('locDesc'), btn=document.getElementById('btnGPS');
+  if(!navigator.geolocation){ d.textContent='Tu dispositivo no soporta geolocalización.'; return; }
+  t.textContent='Obteniendo ubicación...'; d.textContent='Permite el acceso a tu ubicación'; btn.disabled=true;
+  const ok = pos => {
+    ubicacion.lat=+pos.coords.latitude.toFixed(6); ubicacion.lng=+pos.coords.longitude.toFixed(6); ubicacion.acc=Math.round(pos.coords.accuracy);
+    aplicarUbicacionUI();
+    btn.disabled=false; btn.innerHTML='<svg class="icon icon-sm"><use href="#i-refresh"/></svg>Volver a capturar';
+  };
+  const fallo = err => {
+    btn.disabled=false; t.textContent='No se pudo obtener la ubicación';
+    d.textContent = err.code===1
+      ? (PLAT.ios ? 'Permiso denegado. Actívalo en Ajustes > Privacidad > Localización > Safari.' : 'Permiso denegado. Actívalo en el navegador (candado junto a la dirección).')
+      : 'Intenta de nuevo en un lugar abierto.';
+  };
+  // Alta precisión primero; si el GPS no responde a tiempo (común en iOS/interiores) se reintenta con
+  // precisión normal (red/wifi) en vez de dejar al asesor sin ubicación.
+  navigator.geolocation.getCurrentPosition(ok, err => {
+    if(err.code===1){ fallo(err); return; }
+    d.textContent='Señal GPS débil, reintentando...';
+    navigator.geolocation.getCurrentPosition(ok, fallo, { enableHighAccuracy:false, timeout:20000, maximumAge:120000 });
+  }, { enableHighAccuracy:true, timeout:PLAT.ios?15000:12000, maximumAge:0 });
+}
+function aplicarUbicacionUI(){
+  if(!(ubicacion.lat&&ubicacion.lng)) return;
+  document.getElementById('locBox').classList.add('ok');
+  document.getElementById('locTitle').textContent='Ubicación capturada';
+  document.getElementById('locDesc').textContent='Precisión aproximada: '+(ubicacion.acc||'?')+' m';
+  const c=document.getElementById('locCoords'); c.style.display='flex';
+  c.innerHTML='<span>'+ubicacion.lat+', '+ubicacion.lng+'</span> · <a href="https://www.google.com/maps?q='+ubicacion.lat+','+ubicacion.lng+'" target="_blank">Ver en Maps</a>';
+}
+
+// ===== PARAMETRIZACIÓN =====
+// Carga con "stale-while-revalidate": si hay una copia en localStorage (aunque tenga
+// unos minutos), el listado de asesores/PDV/SKU aparece de inmediato con esa copia,
+// y en paralelo se pide la versión fresca al backend (que además ya viene cacheado
+// ahí con CacheService) para actualizar todo sin que el usuario tenga que esperar.
+async function cargarParametrizacion(){
+  ocultarAlertaParam();
+  const cache = leerCacheParametrizacion();
+  if (cache) { aplicarParametrizacion(cache); await refrescarParametrizacion(false, 1); return; }
+  // Sin copia local (primera vez en este celular, o venció hace más de 1h): se avisa
+  // que está cargando (antes quedaba igual que "Selecciona tu nombre" y parecía trabado)
+  // y se reintenta solo hasta 3 veces antes de pasar a modo manual.
+  mostrarCargandoAsesores();
+  await refrescarParametrizacion(true, 3);
+}
+function mostrarCargandoAsesores(){
+  const s=document.getElementById('ciudad');
+  if(s){ s.innerHTML='<option value="">Cargando ciudades...</option>'; }
+}
+function esperar(ms){ return new Promise(r=>setTimeout(r,ms)); }
+function leerCacheParametrizacion(){
+  try{
+    const raw = localStorage.getItem(PARAM_CACHE_KEY);
+    if(!raw) return null;
+    const obj = JSON.parse(raw);
+    if(!obj || !obj.data || !obj.guardadoEn) return null;
+    // Copia demasiado vieja (>1h): mejor no usarla ni como respaldo instantáneo.
+    if((Date.now()-obj.guardadoEn) > 60*60*1000) return null;
+    return obj.data;
+  }catch(e){ return null; }
+}
+function guardarCacheParametrizacion(data){
+  try{ localStorage.setItem(PARAM_CACHE_KEY, JSON.stringify({data:data, guardadoEn:Date.now()})); }catch(e){}
+}
+async function refrescarParametrizacion(mostrarErrorSiFalla, intentos){
+  intentos = intentos || 1;
+  for (let i=1; i<=intentos; i++){
+    try{
+      const res=await fetchConTimeout(GAS_URL+'?action=parametrizacion',{redirect:'follow'},25000);
+      const data=await res.json();
+      if(data&&data.success&&Array.isArray(data.pdvs)&&data.pdvs.length>0){
+        guardarCacheParametrizacion(data);
+        aplicarParametrizacion(data);
+        return;
+      }
+      if(i===intentos && mostrarErrorSiFalla){
+        activarModoManual((data&&data.error)?data.error:'La hoja respondió sin puntos de venta. Revisa la hoja "PDV".');
+      }
+    }catch(err){
+      if(i===intentos && mostrarErrorSiFalla){
+        activarModoManual('No hay conexión con el servidor. ('+err.message+')');
+      }
+    }
+    if(i<intentos) await esperar(900*i); // reintento con espera creciente: 0.9s, 1.8s...
+  }
+}
+function aplicarParametrizacion(data){
+  parametrizacion=Object.assign({pdvs:[],pdvCiudad:{},pdvsPorCiudad:{},skus:[],degustaciones:[],premios:[]}, data); modoManual=false; activarModoSelect();
+  cargarCiudades(); poblarProductos(); aplicarPendAsesorPDV(); actualizarUsuarioEspecial();
+}
+function cargarCiudades(){
+  const s=document.getElementById('ciudad'); const actual=s.value;
+  const ciudades=Object.keys(parametrizacion.pdvsPorCiudad||{}).sort((a,b)=>a.localeCompare(b,'es'));
+  s.innerHTML='<option value="">Selecciona la ciudad</option>'+ciudades.map(c=>'<option value="'+escAttr(c)+'">'+escHtml(c)+'</option>').join('');
+  if(actual && ciudades.indexOf(actual)!==-1) s.value=actual;
+  cargarPDVsPorCiudad(s.value);
+}
+function cargarPDVsPorCiudad(ciudad){
+  const s=document.getElementById('puntoVenta'); const actual=s.value;
+  if(!ciudad){ s.innerHTML='<option value="">Elige primero la ciudad</option>'; s.disabled=true; return; }
+  const lista=(parametrizacion.pdvsPorCiudad||{})[ciudad]||[];
+  s.disabled=false;
+  s.innerHTML='<option value="">Selecciona el punto de venta</option>'+lista.slice().sort((a,b)=>a.localeCompare(b,'es')).map(p=>'<option value="'+escAttr(p)+'">'+escHtml(p)+'</option>').join('');
+  if(actual && lista.indexOf(actual)!==-1) s.value=actual;
+}
+function poblarProductos(){ renderVentas(); renderDegustaciones(); renderEntregaPremios(); renderBannerDegustacion(); }
+
+// ===== SELECTOR DE PRODUCTO: hoja desplegable con buscador (SKU / Premio) =====
+// Reemplaza el <select>/datalist nativo por una hoja propia (mismo patrón visual que
+// "Módulos de la visita"): se abre a pantalla completa con un buscador arriba y la
+// lista filtrable debajo. Funciona igual en Android y iPhone, cosa que el <datalist>
+// nativo no garantiza. Sirve tanto para el catálogo corto (11 SKU) como para el
+// listado largo de SKU Pro (~200) y para Premios.
+let comboItemsActuales = [];
+let comboOnPick = null;
+function triggerCombo(valor, campoLabel, onclickAttr, deshabilitado){
+  if(deshabilitado) return '<div class="select" style="display:flex;align-items:center;min-height:48px;cursor:not-allowed;background:#F1EDF8;color:var(--muted)">Elige la marca primero</div>';
+  return '<div class="select" style="display:flex;align-items:center;min-height:48px;cursor:pointer;'+(valor?'':'color:var(--muted)')+'" onclick="'+onclickAttr+'">'+(valor?escHtml(valor):'Selecciona '+campoLabel.toLowerCase())+'</div>';
+}
+function mostrarCombo(titulo, lista, onPick){
+  comboItemsActuales = (lista||[]).slice().sort((a,b)=>a.localeCompare(b,'es'));
+  comboOnPick = onPick;
+  document.getElementById('combosheetTitulo').textContent = titulo;
+  const buscador=document.getElementById('comboSearch'); buscador.value='';
+  renderComboLista(comboItemsActuales);
+  document.getElementById('combosheet').classList.add('open');
+  document.getElementById('combosheetBd').classList.add('open');
+  setTimeout(()=>buscador.focus(), 220);
+}
+function cerrarCombo(){
+  document.getElementById('combosheet').classList.remove('open');
+  document.getElementById('combosheetBd').classList.remove('open');
+  comboOnPick=null;
+}
+function filtrarCombo(){
+  const q=(document.getElementById('comboSearch').value||'').trim().toLowerCase();
+  renderComboLista(q ? comboItemsActuales.filter(x=>x.toLowerCase().includes(q)) : comboItemsActuales);
+}
+function renderComboLista(items){
+  const cont=document.getElementById('comboLista');
+  cont.innerHTML = items.length===0 ? '<div class="empty-hint">Sin resultados</div>'
+    : items.map(x=>'<div class="combo-item" data-value="'+escAttr(x)+'">'+escHtml(x)+'</div>').join('');
+}
+function seleccionarCombo(valor){
+  const fn=comboOnPick;
+  cerrarCombo();
+  if(fn) fn(valor);
+}
+function findItem(id){ return ventasList.find(x=>x.id===id); }
+function setCantidad(id,v){ const p=findItem(id); if(p) p.cantidad=parseFloat(v)||0; }
+
+// ===== VENTAS (catálogo estándar o SKU Pro en cascada según usuario especial) =====
+function agregarVenta(){ ventasList.push({id:uid('v'),categoria:'',marca:'',producto:'',ean:'',cantidad:1}); renderVentas(); }
+function eliminarVenta(id){ ventasList=ventasList.filter(x=>x.id!==id); renderVentas(); }
+function setCategoriaVenta(id,v){ const p=ventasList.find(x=>x.id===id); if(p){ p.categoria=v; p.marca=''; p.producto=''; p.ean=''; } renderVentas(); }
+function setMarcaVenta(id,v){ const p=ventasList.find(x=>x.id===id); if(p){ p.marca=v; p.producto=''; p.ean=''; } renderVentas(); }
+function opcionesCategoriaPro(sel){
+  return '<option value="">Selecciona categoría</option>'+(parametrizacion.categoriasSkuPro||[]).slice().sort((a,b)=>a.localeCompare(b,'es')).map(c=>'<option value="'+escAttr(c)+'"'+(c===sel?' selected':'')+'>'+escHtml(c)+'</option>').join('');
+}
+function opcionesMarcaPro(categoria, sel){
+  const marcas = (categoria && parametrizacion.skuProCascada[categoria]) ? Object.keys(parametrizacion.skuProCascada[categoria]) : [];
+  return '<option value="">Selecciona marca</option>'+marcas.slice().sort((a,b)=>a.localeCompare(b,'es')).map(m=>'<option value="'+escAttr(m)+'"'+(m===sel?' selected':'')+'>'+escHtml(m||'(Sin marca)')+'</option>').join('');
+}
+function listaProductoPro(categoria, marca){
+  return (categoria && marca && parametrizacion.skuProCascada[categoria] && parametrizacion.skuProCascada[categoria][marca]) ? parametrizacion.skuProCascada[categoria][marca] : [];
+}
+function abrirComboProducto(tipo, id){
+  if(tipo==='ventas'){
+    const p=ventasList.find(x=>x.id===id); if(!p) return;
+    if(esUsuarioEspecial){
+      const lista=listaProductoPro(p.categoria,p.marca).map(x=>x.nombre);
+      mostrarCombo('Producto', lista, (v)=>{
+        const match=listaProductoPro(p.categoria,p.marca).find(x=>x.nombre===v);
+        p.producto=v; p.ean=match?match.ean:''; renderVentas();
+      });
+    } else {
+      mostrarCombo('Vino', parametrizacion.skus, (v)=>{ p.producto=v; renderVentas(); });
+    }
+  }
+  if(tipo==='degustaciones'){
+    const p=degustacionesList.find(x=>x.id===id); if(!p) return;
+    const lista=(parametrizacion.degustaciones&&parametrizacion.degustaciones.length)?parametrizacion.degustaciones:parametrizacion.skus;
+    mostrarCombo('Vino degustado', lista, (v)=>{ p.producto=v; renderDegustaciones(); });
+  }
+}
+function campoProducto(p, campoLabel, tipo){
+  return '<div class="field" style="margin-bottom:0"><label class="label label-req">'+campoLabel+'</label>'
+    + triggerCombo(p.producto, campoLabel, 'abrirComboProducto(\''+tipo+'\',\''+p.id+'\')', false)
+    + '</div>';
+}
+function campoProductoCascada(p){
+  return '<div class="field"><label class="label label-req">Categoría</label><select class="select" onchange="setCategoriaVenta(\''+p.id+'\',this.value)">'+opcionesCategoriaPro(p.categoria)+'</select></div>'+
+    '<div class="field"><label class="label label-req">Marca</label><select class="select" onchange="setMarcaVenta(\''+p.id+'\',this.value)"'+(p.categoria?'':' disabled')+'>'+opcionesMarcaPro(p.categoria,p.marca)+'</select></div>'+
+    '<div class="field" style="margin-bottom:0"><label class="label label-req">Producto</label>'
+    + triggerCombo(p.producto, 'Producto', 'abrirComboProducto(\'ventas\',\''+p.id+'\')', !p.marca)
+    + '</div>';
+}
+function renderVentas(){
+  const cont=document.getElementById('listaVentas'); if(!cont) return; cont.innerHTML='';
+  if(ventasList.length===0){ cont.innerHTML='<div class="empty-hint">Agrega los productos vendidos.</div>'; return; }
+  ventasList.forEach((p,idx)=>{ const d=document.createElement('div'); d.className='item'; d.innerHTML=`
+    <div class="item-head"><div class="item-title"><svg class="icon icon-sm"><use href="#i-cart"/></svg>Vendido ${idx+1}</div><button type="button" class="btn btn-danger btn-icon" onclick="eliminarVenta('${p.id}')"><svg class="icon icon-sm"><use href="#i-trash"/></svg></button></div>
+    ${esUsuarioEspecial ? campoProductoCascada(p) : campoProducto(p, 'Producto', 'ventas')}
+    <div class="field" style="margin-bottom:0;margin-top:11px"><label class="label label-req">Cantidad</label><input type="number" class="input" min="1" value="${p.cantidad}" oninput="setCantidad('${p.id}',this.value)"></div>`; cont.appendChild(d); });
+}
+function onVentaChange(){ const v=(document.querySelector('input[name="ventaRealizada"]:checked')||{}).value; document.getElementById('ventaNo').style.display=v==='No'?'block':'none'; document.getElementById('ventaSi').style.display=v==='Si'?'block':'none'; if(v==='Si'&&ventasList.length===0&&!restaurando) agregarVenta(); }
+
+// ===== DEGUSTACIONES (vino degustado + botellas usadas) =====
+function agregarDegustacion(){ degustacionesList.push({id:uid('d'),producto:'',cantidad:1}); renderDegustaciones(); }
+function eliminarDegustacion(id){ degustacionesList=degustacionesList.filter(x=>x.id!==id); renderDegustaciones(); }
+function setBotellasDeg(id,v){ const p=degustacionesList.find(x=>x.id===id); if(p) p.cantidad=parseFloat(v)||0; }
+function renderDegustaciones(){
+  const cont=document.getElementById('listaDegustaciones'); if(!cont) return; cont.innerHTML='';
+  if(degustacionesList.length===0){ cont.innerHTML='<div class="empty-hint">Agrega los vinos que diste a probar.</div>'; return; }
+  degustacionesList.forEach((p,idx)=>{ const d=document.createElement('div'); d.className='item'; d.innerHTML=`
+    <div class="item-head"><div class="item-title"><svg class="icon icon-sm"><use href="#i-wine"/></svg>Degustación ${idx+1}</div><button type="button" class="btn btn-danger btn-icon" onclick="eliminarDegustacion('${p.id}')"><svg class="icon icon-sm"><use href="#i-trash"/></svg></button></div>
+    ${campoProducto(p, 'Vino degustado', 'degustaciones')}
+    <div class="field" style="margin-bottom:0;margin-top:11px"><label class="label label-req">Botellas utilizadas</label><input type="number" class="input" min="0" step="0.5" inputmode="decimal" value="${p.cantidad}" oninput="setBotellasDeg('${p.id}',this.value)"></div>`; cont.appendChild(d); });
+}
+function renderBannerDegustacion(){
+  const lista=parametrizacion.degustaciones||[]; const b=document.getElementById('bannerDegustacion'); if(!b) return;
+  b.style.display=lista.length?'flex':'none';
+  document.getElementById('bannerDegustacionChips').innerHTML=lista.map(x=>'<span class="info-chip">'+escHtml(x)+'</span>').join('');
+}
+function onDegustacionChange(){ const v=(document.querySelector('input[name="degustacionRealizada"]:checked')||{}).value; document.getElementById('degustacionNo').style.display=v==='No'?'block':'none'; document.getElementById('degustacionSi').style.display=v==='Si'?'block':'none'; if(v==='Si'&&degustacionesList.length===0&&!restaurando) agregarDegustacion(); }
+
+// ===== ENTREGA DE PREMIOS (premios redimidos: cuánto se entregó al consumidor,
+//       uno por cada premio del catálogo) =====
+function sincronizarEntregaPremios(){
+  const lista = parametrizacion.premios || [];
+  if(!Array.isArray(premiosEntregados)) premiosEntregados=[];
+  lista.forEach(prod=>{ if(!premiosEntregados.find(x=>x.producto===prod)) premiosEntregados.push({producto:prod, cantidadEntregada:''}); });
+  premiosEntregados = premiosEntregados.filter(x=> lista.length===0 || lista.indexOf(x.producto)!==-1);
+}
+function renderEntregaPremios(){
+  sincronizarEntregaPremios();
+  const cont=document.getElementById('listaEntregaPremios'); if(!cont) return; cont.innerHTML='';
+  if(premiosEntregados.length===0){ cont.innerHTML='<div class="empty-hint">Aún no hay obsequios en la hoja "Premios" del Sheet.</div>'; return; }
+  premiosEntregados.forEach(it=>{
+    const row=document.createElement('div');
+    row.style.cssText='display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 0;border-bottom:1px solid var(--line)';
+    row.innerHTML=`<span style="font-size:12.5px;flex:1;color:var(--ink)">${escHtml(it.producto)}</span><input type="number" class="input inv-premio-input" style="width:88px;min-height:40px;padding:8px 10px;text-align:center" min="0" placeholder="Cant.">`;
+    const input = row.querySelector('.inv-premio-input');
+    input.value = it.cantidadEntregada;
+    input.addEventListener('input', () => { it.cantidadEntregada = input.value; });
+    cont.appendChild(row);
+  });
+}
+
+// ===== VOZ DEL CONSUMIDOR (encuesta completa por consumidor entrevistado) =====
+function agregarVoz(){ vozList.push({id:uid('voz'),tipoProductoPreferido:'',conoceMarca:'',canalesConocimiento:[],canalOtro:'',usoMarca:'',opinionProductos:0,tipoCabello:'',atributosDeseados:[],atributosOtro:'',percepcionPunto:'',mejoraria:'',productoComentado:'',edad:'',genero:''}); renderVoz(); }
+function eliminarVoz(id){ vozList=vozList.filter(x=>x.id!==id); renderVoz(); }
+function setFldVoz(id,campo,v){ const p=vozList.find(x=>x.id===id); if(p) p[campo]=v; if(campo==='conoceMarca') renderVoz(); }
+function toggleMultiVoz(id, campo, valor, checked){
+  const p=vozList.find(x=>x.id===id); if(!p) return;
+  if(!Array.isArray(p[campo])) p[campo]=[];
+  if(checked){ if(p[campo].indexOf(valor)===-1) p[campo].push(valor); }
+  else { p[campo]=p[campo].filter(v=>v!==valor); }
+}
+function renderVoz(){
+  const cont=document.getElementById('listaVoz'); if(!cont) return; cont.innerHTML='';
+  if(vozList.length===0){ cont.innerHTML='<div class="empty-hint">Agrega la opinión de un consumidor.</div>'; return; }
+  vozList.forEach((p,idx)=>{ const d=document.createElement('div'); d.className='item'; d.innerHTML=`
+    <div class="item-head"><div class="item-title"><svg class="icon icon-sm"><use href="#i-chat"/></svg>Consumidor ${idx+1}</div><button type="button" class="btn btn-danger btn-icon" onclick="eliminarVoz('${p.id}')"><svg class="icon icon-sm"><use href="#i-trash"/></svg></button></div>
+    <div class="field"><label class="label label-req">¿Qué tipo de vino prefiere?</label>${gruposEmoji('tipoProductoPreferido',p,TIPO_PRODUCTO_PREFERIDO)}</div>
+    <div class="field"><label class="label label-req">¿Conocía la marca?</label>${gruposEmoji('conoceMarca',p,CONOCE_MARCA)}</div>
+    ${p.conoceMarca==='Sí la conocía' ? `<div class="field"><label class="label label-req">¿Por dónde la ha escuchado o visto? <span style="font-weight:400;color:var(--muted)">(varias)</span></label>
+      ${gruposMultiEmoji('canalesConocimiento',p,CANALES_CONOCIMIENTO)}
+      <input type="text" class="input" style="margin-top:9px" placeholder="Otro (opcional)" value="${escAttr(p.canalOtro)}" oninput="setFldVoz('${p.id}','canalOtro',this.value)">
+    </div>` : ''}
+    <div class="field"><label class="label label-req">¿Ha probado los vinos de la marca?</label>${gruposEmoji('usoMarca',p,USO_MARCA)}</div>
+    <div class="field"><label class="label label-req">¿Qué opinión tiene sobre los vinos?</label>${gruposEmoji('opinionProductos',p,OPINION_PRODUCTOS)}</div>
+    <div class="field"><label class="label">¿Para qué ocasión lo compraría? <span style="font-weight:400;color:var(--muted)">(opcional)</span></label>${gruposOpcionSimple('tipoCabello',p,TIPOS_CABELLO)}</div>
+    <div class="field"><label class="label">¿Qué le gustaría ver que la competencia no ofrece? <span style="font-weight:400;color:var(--muted)">(opcional, varias)</span></label>
+      ${gruposMultiEmoji('atributosDeseados',p,ATRIBUTOS_DESEADOS)}
+      <input type="text" class="input" style="margin-top:9px" placeholder="Otro (opcional)" value="${escAttr(p.atributosOtro)}" oninput="setFldVoz('${p.id}','atributosOtro',this.value)">
+    </div>
+    <div class="field"><label class="label label-req">Al probar o ver el vino en el punto, ¿cuál fue su percepción?</label>${gruposEmoji('percepcionPunto',p,PERCEPCION_PUNTO)}</div>
+    <div class="field"><label class="label">¿Qué mejoraría? <span style="font-weight:400;color:var(--muted)">(opcional)</span></label><textarea class="textarea" placeholder="Ideas o cosas por mejorar" oninput="setFldVoz('${p.id}','mejoraria',this.value)">${escHtml(p.mejoraria||'')}</textarea></div>
+    <div class="field"><label class="label">Vino comentado <span style="font-weight:400;color:var(--muted)">(opcional)</span></label><input type="text" class="input" placeholder="Ej: Nuit Dorée Rosé" value="${escAttr(p.productoComentado)}" oninput="setFldVoz('${p.id}','productoComentado',this.value)"></div>
+    <div class="field"><label class="label">Rango de edad aprox. <span style="font-weight:400;color:var(--muted)">(opcional)</span></label>${gruposOpcionSimple('edad',p,EDADES)}</div>
+    <div class="field" style="margin-bottom:0"><label class="label">Género <span style="font-weight:400;color:var(--muted)">(opcional)</span></label>${gruposOpcionSimple('genero',p,GENEROS)}</div>`; cont.appendChild(d); });
+}
+// Grupo de opciones de una sola respuesta, mostradas como botón emoji + etiqueta corta
+function gruposEmoji(campo, p, opciones){
+  return `<div class="opt-grid emoji-grid">${opciones.map(o=>{
+    const idSafe='voz-'+campo+'-'+p.id+'-'+String(o.v).replace(/[^a-zA-Z0-9]/g,'');
+    const checked = String(p[campo])===String(o.v);
+    const setVal = typeof o.v==='number' ? o.v : ("'"+escAttr(String(o.v)).replace(/'/g,"\\'")+"'");
+    return `<div class="opt"><input type="radio" name="voz-${campo}-${p.id}" id="${idSafe}"${checked?' checked':''} onchange="setFldVoz('${p.id}','${campo}',${setVal})">
+      <label for="${idSafe}"><span class="emoji-ic">${o.e}</span><span class="emoji-lbl">${o.l||o.v}</span></label></div>`;
+  }).join('')}</div>`;
+}
+// Grupo de opciones de una sola respuesta, en texto simple (sin emoji) - edad, tipo de cabello, género
+function gruposOpcionSimple(campo, p, opciones){
+  return `<div class="opt-grid">${opciones.map(v=>{
+    const idSafe='voz-'+campo+'-'+p.id+'-'+v.replace(/[^a-zA-Z0-9]/g,'');
+    const checked = p[campo]===v;
+    return `<div class="opt"><input type="radio" name="voz-${campo}-${p.id}" id="${idSafe}"${checked?' checked':''} onchange="setFldVoz('${p.id}','${campo}','${escAttr(v).replace(/'/g,"\\'")}')">
+      <label for="${idSafe}">${escHtml(v)}</label></div>`;
+  }).join('')}</div>`;
+}
+// Selección múltiple (varias opciones a la vez) - atributos deseados, canales de conocimiento, etc.
+function gruposMultiEmoji(campo, p, opciones){
+  const sel=p[campo]||[];
+  return `<div class="opt-grid emoji-grid">${opciones.map(o=>{
+    const idSafe='voz-'+campo+'-'+p.id+'-'+o.v.replace(/[^a-zA-Z0-9]/g,'');
+    return `<div class="opt"><input type="checkbox" id="${idSafe}"${sel.indexOf(o.v)!==-1?' checked':''} onchange="toggleMultiVoz('${p.id}','${campo}','${escAttr(o.v)}',this.checked)">
+      <label for="${idSafe}"><span class="emoji-ic">${o.e}</span><span class="emoji-lbl">${o.v}</span></label></div>`;
+  }).join('')}</div>`;
+}
+
+// ===== ACTIVIDAD DE LA COMPETENCIA (evidencias con foto obligatoria por ítem) =====
+function agregarEvidenciaCompetencia(){ competenciaList.push({id:uid('c'),marca:'',tipo:'',descripcion:'',foto:'',fotoURL:''}); renderCompetencia(); }
+function eliminarEvidenciaCompetencia(id){ competenciaList=competenciaList.filter(x=>x.id!==id); renderCompetencia(); }
+function setCompetenciaField(id,campo,v){ const p=competenciaList.find(x=>x.id===id); if(p) p[campo]=v; }
+function renderCompetencia(){
+  const cont=document.getElementById('listaCompetencia'); if(!cont) return; cont.innerHTML='';
+  if(competenciaList.length===0){ cont.innerHTML='<div class="empty-hint">Agrega la evidencia de la competencia.</div>'; return; }
+  competenciaList.forEach((p,idx)=>{ const d=document.createElement('div'); d.className='item'; d.innerHTML=`
+    <div class="item-head"><div class="item-title"><svg class="icon icon-sm"><use href="#i-search"/></svg>Evidencia ${idx+1}</div><button type="button" class="btn btn-danger btn-icon" onclick="eliminarEvidenciaCompetencia('${p.id}')"><svg class="icon icon-sm"><use href="#i-trash"/></svg></button></div>
+    <div class="field"><label class="label label-req">Tipo de actividad</label><select class="select" onchange="setCompetenciaField('${p.id}','tipo',this.value)"><option value="">Seleccionar</option>${TIPOS_ACTIVIDAD_COMPETENCIA.map(t=>'<option value="'+escAttr(t)+'"'+(t===p.tipo?' selected':'')+'>'+escHtml(t)+'</option>').join('')}</select></div>
+    <div class="field"><label class="label">Marca de la competencia</label><input type="text" class="input" placeholder="Ej: nombre de la marca observada" value="${escAttr(p.marca)}" oninput="setCompetenciaField('${p.id}','marca',this.value)"></div>
+    <div class="field"><label class="label">Descripción</label><textarea class="textarea" placeholder="Detalle de lo observado" oninput="setCompetenciaField('${p.id}','descripcion',this.value)">${escHtml(p.descripcion||'')}</textarea></div>
+    <div class="field" style="margin-bottom:0"><label class="label label-req">Foto de evidencia</label>
+      <div class="upload upload-mini" id="uploadComp_${p.id}">
+        <input type="file" id="fileComp_${p.id}" accept="image/*" capture="environment">
+        <div id="defComp_${p.id}" style="${(p.foto||p.fotoURL)?'display:none':''}"><div class="upload-ic"><svg class="icon"><use href="#i-camera"/></svg></div><div class="upload-t">Tomar / subir foto</div></div>
+        <div id="prevComp_${p.id}" style="${(p.foto||p.fotoURL)?'':'display:none'}"><img id="imgComp_${p.id}" class="preview-img" src="${p.foto||p.fotoURL||''}"><div class="preview-act"><button type="button" class="btn btn-outline btn-sm" onclick="event.stopPropagation();document.getElementById('fileComp_${p.id}').click()"><svg class="icon icon-sm"><use href="#i-upload"/></svg>Cambiar</button></div></div>
+      </div>
+    </div>`; cont.appendChild(d);
+    document.getElementById('fileComp_'+p.id).classList && document.getElementById('fileComp_'+p.id).addEventListener('change', e => leerFotoEvidencia(e, p.id));
+  });
+}
+function leerFotoEvidencia(e, itemId){
+  const file=e.target.files[0]; if(!file) return;
+  if(file.size>25*1024*1024){ alert('La imagen es muy pesada (más de 25 MB).'); e.target.value=''; return; }
+  comprimirImagen(file, 1280, 0.7, data=>{
+    if(!data){ alert('No se pudo procesar la foto. Intenta de nuevo.'); e.target.value=''; return; }
+    const it=competenciaList.find(x=>x.id===itemId); if(it){ it.foto=data; it.fotoURL=''; }
+    document.getElementById('imgComp_'+itemId).src=data;
+    document.getElementById('defComp_'+itemId).style.display='none';
+    document.getElementById('prevComp_'+itemId).style.display='block';
+    persistir(); persistirFotos();
+  });
+}
+function onCompetenciaChange(){ const v=(document.querySelector('input[name="competenciaHayActividad"]:checked')||{}).value; document.getElementById('competenciaSi').style.display=v==='Si'?'block':'none'; if(v==='Si'&&competenciaList.length===0&&!restaurando) agregarEvidenciaCompetencia(); }
+
+// ===== FOTOS SIMPLES (ingreso / salida / premios) =====
+const FOTO_VARS = {
+  ingreso: { get:()=>fotoIngreso, set:v=>fotoIngreso=v, getURL:()=>fotoIngresoURL, setURL:v=>fotoIngresoURL=v },
+  salida: { get:()=>fotoSalida, set:v=>fotoSalida=v, getURL:()=>fotoSalidaURL, setURL:v=>fotoSalidaURL=v },
+  premios: { get:()=>fotoPremios, set:v=>fotoPremios=v, getURL:()=>fotoPremiosURL, setURL:v=>fotoPremiosURL=v }
+};
+function aplicarFoto(clave, data){
+  if(!data) return;
+  const V=FOTO_VARS[clave]; if(clave==='ingreso'||clave==='salida'){ /* mandatorio: usa fotoIngreso/fotoSalida ya asignado por llamador */ }
+  const img=document.getElementById('img'+capitaliza(clave));
+  if(img) img.src=data;
+  const def=document.getElementById('def'+capitaliza(clave));
+  const prev=document.getElementById('prev'+capitaliza(clave));
+  const up=document.getElementById('upload'+capitaliza(clave));
+  if(def) def.style.display='none';
+  if(prev) prev.style.display='block';
+  if(up) up.classList.add('has');
+}
+function capitaliza(s){ return s.charAt(0).toUpperCase()+s.slice(1); }
+function leerFotoSimple(e, clave){
+  const file=e.target.files[0]; if(!file) return;
+  if(file.size>25*1024*1024){ alert('La imagen es muy pesada (más de 25 MB).'); e.target.value=''; return; }
+  comprimirImagen(file, 1280, 0.7, data=>{
+    if(!data){ alert('No se pudo procesar la foto (memoria insuficiente en el dispositivo). Cierra otras apps/pestañas e intenta de nuevo.'); e.target.value=''; return; }
+    FOTO_VARS[clave].set(data); FOTO_VARS[clave].setURL('');
+    if(clave==='ingreso'){ fotoIngreso=data; fotoIngresoURL=''; }
+    if(clave==='salida'){ fotoSalida=data; fotoSalidaURL=''; }
+    if(clave==='premios'){ fotoPremios=data; fotoPremiosURL=''; }
+    aplicarFoto(clave, data);
+    persistir(); persistirFotos();
+  });
+}
+function quitarFotoIngreso(){ quitarFoto('ingreso'); }
+function quitarFoto(clave){
+  if(clave==='ingreso'){ fotoIngreso=''; fotoIngresoURL=''; document.getElementById('fileIngreso').value=''; }
+  if(clave==='salida'){ fotoSalida=''; fotoSalidaURL=''; document.getElementById('fileSalida').value=''; }
+  if(clave==='premios'){ fotoPremios=''; fotoPremiosURL=''; document.getElementById('filePremios').value=''; }
+  const def=document.getElementById('def'+capitaliza(clave));
+  const prev=document.getElementById('prev'+capitaliza(clave));
+  const up=document.getElementById('upload'+capitaliza(clave));
+  if(def) def.style.display='block';
+  if(prev) prev.style.display='none';
+  if(up) up.classList.remove('has');
+  persistir(); persistirFotos();
+}
+function comprimirImagen(archivo, maxLado, calidad, cb){
+  const abrirBitmap = () => { try{ return createImageBitmap(archivo,{imageOrientation:'from-image'}).catch(()=>createImageBitmap(archivo)); }catch(e){ return createImageBitmap(archivo); } };
+  const previoBitmap = window.createImageBitmap ? abrirBitmap().catch(()=>null) : Promise.resolve(null);
+  previoBitmap.then(bitmap=>{
+    if(bitmap){
+      try{
+        let w=bitmap.width, h=bitmap.height; const m=Math.max(w,h);
+        if(m>maxLado){ const esc=maxLado/m; w=Math.round(w*esc); h=Math.round(h*esc); }
+        const c=document.createElement('canvas'); c.width=w; c.height=h;
+        c.getContext('2d').drawImage(bitmap,0,0,w,h);
+        if(bitmap.close) bitmap.close();
+        cb(c.toDataURL('image/jpeg', calidad));
+        return;
+      }catch(err){ /* sigue al fallback */ }
+    }
+    comprimirImagenFallback(archivo, maxLado, calidad, cb);
+  });
+}
+function comprimirImagenFallback(archivo, maxLado, calidad, cb){
+  const esBlob = typeof archivo !== 'string';
+  const url = esBlob ? URL.createObjectURL(archivo) : archivo;
+  const img=new Image();
+  img.onload=function(){
+    if(esBlob) URL.revokeObjectURL(url);
+    let w=img.width, h=img.height; const m=Math.max(w,h);
+    if(m>maxLado){ const esc=maxLado/m; w=Math.round(w*esc); h=Math.round(h*esc); }
+    try{
+      const c=document.createElement('canvas'); c.width=w; c.height=h;
+      c.getContext('2d').drawImage(img,0,0,w,h);
+      cb(c.toDataURL('image/jpeg', calidad));
+    }catch(err){ cb(null); }
+  };
+  img.onerror=function(){ if(esBlob) URL.revokeObjectURL(url); cb(null); };
+  img.src=url;
+}
+
+// ===== PANEL PERSONA =====
+function abrirPersona(){
+  document.getElementById('pNombre').textContent = getAsesorNombre() || '—';
+  document.getElementById('pDoc').textContent = getAsesorDocumento() || '—';
+  document.getElementById('pCiudad').textContent = getCiudad() || '—';
+  document.getElementById('pCatalogo').textContent = 'Vinos Meico ('+((parametrizacion.skus||[]).length)+' referencias)';
+  document.getElementById('pPdvActual').textContent = getPDV() || '—';
+  document.getElementById('pCodigoSesion').textContent = registroId || 'Aún no generado';
+  document.getElementById('personaModal').classList.add('show');
+}
+function cerrarPersona(){ document.getElementById('personaModal').classList.remove('show'); }
+
+// ===== PERSISTENCIA DE SESIÓN =====
+function persistir(){
+  if(restaurando) return;
+  try{
+    const campos=recolectarGestion(); campos.fotoIngreso=''; campos.fotoSalida=''; campos.fotoPremios='';
+    if(Array.isArray(campos.competenciaEvidencias)) campos.competenciaEvidencias=campos.competenciaEvidencias.map(ev=>Object.assign({},ev,{foto:''}));
+    if(!inicioSesion && (window._comenzando||registroId)) inicioSesion=Date.now();
+    const data={ loggedIn:true, guardadoEn:Date.now(), inicio:inicioSesion, registroId, saved, current, ubicacion, esUsuarioEspecial,
+      fotoIngresoURL, fotoSalidaURL, fotoPremiosURL, campos, asesorSel,
+      listas:{ ventasList, degustacionesList, vozList, premiosEntregados, competenciaList: competenciaList.map(ev=>Object.assign({},ev,{foto:''})) } };
+    localStorage.setItem(LS_KEY, JSON.stringify(data));
+  }catch(e){}
+}
+function persistirFotos(){
+  try{
+    const competenciaFotos={}; competenciaList.forEach(ev=>{ if(ev.foto) competenciaFotos[ev.id]=ev.foto; });
+    localStorage.setItem(LS_FOTOS, JSON.stringify({ fotoIngreso, fotoSalida, fotoPremios, competenciaFotos }));
+  }catch(e){}
+}
+function limpiarSesionLocal(){ try{ localStorage.removeItem(LS_KEY); localStorage.removeItem(LS_FOTOS); }catch(e){} }
+function restaurarSesion(){
+  let raw; try{ raw=localStorage.getItem(LS_KEY); }catch(e){ return false; }
+  if(!raw) return false;
+  let d; try{ d=JSON.parse(raw); }catch(e){ return false; }
+  if(!d || !d.loggedIn || !d.campos) return false;
+  if(d.guardadoEn && (Date.now()-d.guardadoEn) > SESION_MAX_MS){ limpiarSesionLocal(); return false; }
+  const iniSes=d.inicio||d.guardadoEn||0;
+  if(iniSes && iniSes < ultimoCorte(Date.now())){ /* la sesión quedó abierta pasadas las 11:00 p. m. */
+    limpiarSesionLocal();
+    if(d.registroId){ try{ localStorage.setItem(LS_LOGOUT_MSG, String(Date.now())); }catch(e){} }
+    return false;
+  }
+  inicioSesion=iniSes||Date.now(); window._comenzando=true;
+  restaurando=true;
+  const g=d.campos;
+  asesorSel=d.asesorSel||{nombre:'',documento:'',telefono:''};
+  actualizarUsuarioEspecial(); /* antes de pintar Ventas: si no, el catálogo se renderiza con el valor por defecto */
+  pendAsesorNombre=g.asesorNombre||''; pendPDV=g.puntoVenta||''; pendCiudad=g.ciudad||'';
+  setIdentidad(g.asesorNombre||asesorSel.nombre, g.asesorDocumento||asesorSel.documento);
+  if(modoManual){
+    document.getElementById('ciudadTexto').value=pendCiudad;
+    document.getElementById('pdvTexto').value=pendPDV;
+  } else { aplicarPendAsesorPDV(); }
+  setRadio('ventaRealizada', g.ventaRealizada); onVentaChange();
+  if(g.ventaMotivoNo!=null){ const el=document.getElementById('ventaMotivoNo'); if(el) el.value=g.ventaMotivoNo; }
+  setRadio('competenciaHayActividad', g.competenciaHayActividad); onCompetenciaChange();
+  setRadio('degustacionRealizada', g.degustacionRealizada); onDegustacionChange();
+  if(g.degustacionMotivoNo!=null){ const el=document.getElementById('degustacionMotivoNo'); if(el) el.value=g.degustacionMotivoNo; }
+  document.getElementById('degustacionImpactos').value=(g.degustacionImpactos!=null?g.degustacionImpactos:'');
+  document.getElementById('degustacionObservaciones').value=g.degustacionObservaciones||'';
+  const L=d.listas||{};
+  ventasList=L.ventasList||[]; degustacionesList=L.degustacionesList||[]; vozList=L.vozList||[]; competenciaList=L.competenciaList||[]; premiosEntregados=L.premiosEntregados||[];
+  renderVentas(); renderDegustaciones(); renderVoz(); renderCompetencia(); renderEntregaPremios();
+  document.getElementById('premiosObservaciones').value=g.premiosObservaciones||'';
+  ubicacion=d.ubicacion||{lat:null,lng:null,acc:null};
+  aplicarUbicacionUI();
+  let fotos={}; try{ fotos=JSON.parse(localStorage.getItem(LS_FOTOS)||'{}'); }catch(e){}
+  fotoIngresoURL=d.fotoIngresoURL||''; fotoSalidaURL=d.fotoSalidaURL||''; fotoPremiosURL=d.fotoPremiosURL||'';
+  if(fotos.fotoIngreso){ fotoIngreso=fotos.fotoIngreso; aplicarFoto('ingreso', fotos.fotoIngreso); } else if(fotoIngresoURL){ aplicarFoto('ingreso', fotoIngresoURL); }
+  if(fotos.fotoSalida){ fotoSalida=fotos.fotoSalida; aplicarFoto('salida', fotos.fotoSalida); } else if(fotoSalidaURL){ aplicarFoto('salida', fotoSalidaURL); }
+  if(fotos.fotoPremios){ fotoPremios=fotos.fotoPremios; aplicarFoto('premios', fotos.fotoPremios); } else if(fotoPremiosURL){ aplicarFoto('premios', fotoPremiosURL); }
+  if(fotos.competenciaFotos){ competenciaList.forEach(ev=>{ if(fotos.competenciaFotos[ev.id]) ev.foto=fotos.competenciaFotos[ev.id]; }); renderCompetencia(); }
+  document.getElementById('observacionesGenerales').value=g.observacionesGenerales||'';
+  document.getElementById('proximaVisita').value=g.proximaVisita||'';
+  saved=d.saved||{}; registroId=d.registroId||''; current=d.current||'ingreso';
+  onIdentChange();
+  const p=document.getElementById('portada'); p.classList.add('hide'); p.style.display='none';
+  renderNav();
+  restaurando=false;
+  return true;
+}
+function setRadio(name, value){ if(!value) return; const el=document.querySelector('input[name="'+name+'"][value="'+value+'"]'); if(el) el.checked=true; }
+
+// ===== VALIDACIÓN Y GUARDADO =====
+function validarModulo(id){
+  const e=[];
+  if(id==='ingreso'){
+    if(!getAsesorNombre()) e.push('Asesor');
+    if(!getAsesorDocumento()) e.push('Documento del asesor');
+    if(!getCiudad()) e.push('Ciudad');
+    if(!getPDV()) e.push('Punto de venta');
+    if(!ubicacion.lat || !ubicacion.lng) e.push('Ubicación GPS');
+    if(!(fotoIngreso||fotoIngresoURL)) e.push('Foto de ingreso (obligatoria)');
+  }
+  if(id==='ventas'){
+    const v=(document.querySelector('input[name="ventaRealizada"]:checked')||{}).value;
+    if(!v) e.push('¿Se realizó venta?');
+    if(v==='No'&&!val('ventaMotivoNo')) e.push('Motivo de no venta');
+    if(v==='Si'){
+      if(ventasList.length===0) e.push('Agrega al menos un producto vendido');
+      ventasList.forEach((p,i)=>{ if(!p.producto) e.push('Producto vendido '+(i+1)); if(!p.cantidad||p.cantidad<1) e.push('Cantidad vendido '+(i+1)); });
+    }
+  }
+  if(id==='degustaciones'){
+    const v=(document.querySelector('input[name="degustacionRealizada"]:checked')||{}).value;
+    if(!v) e.push('¿Se realizaron degustaciones?');
+    if(v==='No'&&!val('degustacionMotivoNo')) e.push('Motivo de no degustación');
+    if(v==='Si'){
+      if(degustacionesList.length===0) e.push('Agrega al menos un vino degustado');
+      degustacionesList.forEach((p,i)=>{ if(!p.producto) e.push('Vino degustado '+(i+1)); if(!(p.cantidad>0)) e.push('Botellas de la degustación '+(i+1)); });
+    }
+    if(val('degustacionImpactos')==='') e.push('Impactos generados (usa 0 si no hubo)');
+  }
+  if(id==='premios'){
+    premiosEntregados.forEach(it=>{ if(it.cantidadEntregada===''||it.cantidadEntregada===null||it.cantidadEntregada===undefined) e.push('Cantidad entregada de "'+it.producto+'"'); });
+  }
+  if(id==='voz'){
+    vozList.forEach((p,i)=>{
+      if(!p.tipoProductoPreferido) e.push('Tipo de producto preferido (consumidor '+(i+1)+')');
+      if(!p.conoceMarca) e.push('¿Ha escuchado la marca? (consumidor '+(i+1)+')');
+      if(p.conoceMarca==='Sí la conocía' && (!p.canalesConocimiento || p.canalesConocimiento.length===0)) e.push('¿Por dónde la ha escuchado? (consumidor '+(i+1)+')');
+      if(!p.usoMarca) e.push('¿Ha usado la marca? (consumidor '+(i+1)+')');
+      if(!p.opinionProductos) e.push('Opinión sobre los productos (consumidor '+(i+1)+')');
+      if(!p.percepcionPunto) e.push('Percepción en el punto (consumidor '+(i+1)+')');
+    });
+  }
+  if(id==='competencia'){
+    const v=(document.querySelector('input[name="competenciaHayActividad"]:checked')||{}).value;
+    if(!v) e.push('¿Hay actividad de la competencia?');
+    if(v==='Si'){
+      if(competenciaList.length===0) e.push('Agrega al menos una evidencia');
+      competenciaList.forEach((p,i)=>{ if(!p.tipo) e.push('Tipo de actividad (evidencia '+(i+1)+')'); if(!p.foto&&!p.fotoURL) e.push('Foto de evidencia '+(i+1)); });
+    }
+  }
+  if(id==='salida'){
+    if(!(fotoSalida||fotoSalidaURL)) e.push('Foto de salida (obligatoria)');
+  }
+  return e;
+}
+function recolectarGestion(){
+  return {
+    registroId: registroId,
+    asesorNombre: getAsesorNombre(), asesorDocumento: getAsesorDocumento(), asesorTelefono: getAsesorTelefono(),
+    puntoVenta: getPDV(), ciudad: getCiudad(), esUsuarioEspecial: esUsuarioEspecial, dispositivo: DISPOSITIVO,
+    latitud: ubicacion.lat||'', longitud: ubicacion.lng||'', precisionGPS: ubicacion.acc||'',
+    fotoIngreso: fotoIngreso, fotoIngresoURL: fotoIngresoURL,
+    fotoSalida: fotoSalida, fotoSalidaURL: fotoSalidaURL,
+    ventaRealizada: (document.querySelector('input[name="ventaRealizada"]:checked')||{}).value||'',
+    ventaMotivoNo: val('ventaMotivoNo'),
+    ventaProductos: ventasList.map(p=>({categoria:p.categoria,marca:p.marca,producto:p.producto,ean:p.ean,cantidad:p.cantidad})),
+    degustacionRealizada: (document.querySelector('input[name="degustacionRealizada"]:checked')||{}).value||'',
+    degustacionMotivoNo: val('degustacionMotivoNo'),
+    degustacionProductos: degustacionesList.map(p=>({producto:p.producto,cantidad:p.cantidad})),
+    degustacionImpactos: val('degustacionImpactos'), degustacionObservaciones: val('degustacionObservaciones'),
+    premiosEntregados: premiosEntregados.map(it=>({producto:it.producto,cantidadEntregada:it.cantidadEntregada})),
+    premiosObservaciones: val('premiosObservaciones'), fotoPremios: fotoPremios, fotoPremiosURL: fotoPremiosURL,
+    vozConsumidor: vozList.map(p=>({tipoProductoPreferido:p.tipoProductoPreferido,conoceMarca:p.conoceMarca,canalesConocimiento:p.canalesConocimiento||[],canalOtro:p.canalOtro,usoMarca:p.usoMarca,opinionProductos:p.opinionProductos,tipoCabello:p.tipoCabello,atributosDeseados:p.atributosDeseados||[],atributosOtro:p.atributosOtro,percepcionPunto:p.percepcionPunto,mejoraria:p.mejoraria,productoComentado:p.productoComentado,edad:p.edad,genero:p.genero})),
+    competenciaHayActividad: (document.querySelector('input[name="competenciaHayActividad"]:checked')||{}).value||'',
+    competenciaEvidencias: competenciaList.map(p=>({marca:p.marca,tipo:p.tipo,descripcion:p.descripcion,foto:p.foto,fotoURL:p.fotoURL})),
+    observacionesGenerales: val('observacionesGenerales'), proximaVisita: val('proximaVisita'),
+    modulosGuardados: ''
+  };
+}
+async function guardarModulo(id, finalizar){
+  const errs=validarModulo(id);
+  if(errs.length>0){ alert('Completa antes de guardar:\n\n• '+errs.join('\n• ')); return; }
+  if(registroPromise){ mostrarLoading('Guardando...'); try{ await registroPromise; }catch(e){} registroPromise=null; }
+  const eraNuevo=!registroId;
+  if(!registroId) registroId=generarRegistroId(); /* el ID se genera aquí: así un guardado sin señal puede reenviarse luego sin duplicar la fila */
+  const gestion=recolectarGestion();
+  saved[id]=true;
+  gestion.modulosGuardados=Object.keys(saved).filter(k=>saved[k]).join(', ');
+  if(finalizar) gestion.horaSalidaPDV=new Date().toString();
+  const tituloModulo=finalizar?'Finalizando gestión...':'Guardando '+(MODS.find(m=>m.id===id)||{}).label+'...';
+  mostrarLoading(tituloModulo);
+  // Envío resiliente: con señal buena se guarda de inmediato. Con señal mala/intermitente (sin red, 2G,
+  // timeouts o respuestas que no son JSON) la gestión queda en la cola del celular y se envía sola cuando
+  // mejora la red. Un error de VALIDACIÓN del backend (p. ej. falta la foto) no se encola: se avisa.
+  const payload={registroId:registroId,gestion:gestion,modulo:id};
+  const r=await enviarGestionResiliente(payload, finalizar);
+  ocultarLoading();
+  if(r.ok){
+    const data=r.data;
+    registroId=data.registroId||registroId;
+    if(eraNuevo&&registroId) mostrarCodigoSesion();
+    aplicarRespuestaEnviada(payload, data, false);
+    renderNav(); persistir();
+    if(finalizar){ mostrarExito(data); }
+    else { toast((MODS.find(m=>m.id===id)||{}).label+' guardado'); }
+  } else if(r.encolado){
+    if(eraNuevo&&registroId) mostrarCodigoSesion();
+    renderNav(); persistir();
+    if(finalizar){ mostrarExito({registroId:registroId, pendiente:true}); }
+    else { toast('Sin buena señal: '+((MODS.find(m=>m.id===id)||{}).label||'módulo')+' guardado en el celular. Se enviará solo al volver la señal.', true, 4500); }
+  } else if(r.validacion){
+    saved[id]=false; persistir(); alert('Error: '+(r.error||'desconocido'));
+  } else {
+    saved[id]=false; persistir();
+    alert('No se pudo guardar: el celular no tiene espacio o permiso de almacenamiento para dejar la gestión en cola. Tu información sigue en pantalla — libera espacio o mejora la señal e intenta guardar de nuevo.');
+  }
+}
+function toast(msg, warn, ms){ const t=document.getElementById('toast'); document.getElementById('toastMsg').textContent=msg; t.querySelector('.icon use').setAttribute('href', warn?'#i-alert':'#i-check'); t.classList.toggle('warn', !!warn); t.classList.add('show'); clearTimeout(window._tt); window._tt=setTimeout(()=>t.classList.remove('show'),ms||2200); }
+function mostrarLoading(m){ document.getElementById('loadingMsg').textContent=m; document.getElementById('loadingOverlay').classList.add('show'); }
+function ocultarLoading(){ document.getElementById('loadingOverlay').classList.remove('show'); }
+function mostrarExito(d){ document.getElementById('successInfo').textContent='Registro: '+d.registroId+(d.pendiente?' — PENDIENTE DE ENVÍO: quedó guardado en el celular y se enviará solo cuando haya buena señal. No borres los datos del navegador.':''); document.getElementById('successModal').classList.add('show'); }
+
+// ===== SALIDA DEL PDV (resumen) =====
+function renderResumen(){
+  const cont=document.getElementById('resumenContenido');
+  const ventaR=(document.querySelector('input[name="ventaRealizada"]:checked')||{}).value||'';
+  const competenciaR=(document.querySelector('input[name="competenciaHayActividad"]:checked')||{}).value||'';
+  const ubic=(ubicacion.lat&&ubicacion.lng)?'<a href="https://www.google.com/maps?q='+ubicacion.lat+','+ubicacion.lng+'" target="_blank">Abrir en Maps</a> ('+ubicacion.lat+', '+ubicacion.lng+')':'No capturada';
+
+  let h='';
+  h+=sec('i-user','Asesor',[ ln('Nombre',escHtml(getAsesorNombre())||'—'), ln('Documento',escHtml(getAsesorDocumento())||'—'), ln('Código de sesión',escHtml(registroId)||'—') ]);
+  h+=sec('i-pin','Punto de venta',[ ln('Ciudad',escHtml(getCiudad())||'—'), ln('PDV',escHtml(getPDV())||'—'), ln('Ubicación',ubic), ln('Foto de ingreso',(fotoIngreso||fotoIngresoURL)?(fotoIngresoURL?'<a href="'+fotoIngresoURL+'" target="_blank">Ver foto</a>':'Tomada ✓'):'—') ]);
+
+  let vH='<div class="res-line"><span class="rk">¿Se realizó venta?</span><span class="rv">'+(ventaR||'—')+'</span></div>';
+  if(ventaR==='No') vH+='<div class="res-line"><span class="rk">Motivo</span><span class="rv">'+(escHtml(val('ventaMotivoNo'))||'—')+'</span></div>';
+  if(ventaR==='Si'){ vH+=(ventasList.length?ventasList.map((p,i)=>'<div class="res-mini">'+(i+1)+'. <b>'+(escHtml(p.producto)||'—')+'</b> · '+(p.cantidad||0)+' und</div>').join(''):'<div class="res-mini">Sin productos vendidos</div>'); }
+  h+=secRaw('i-cart','Ventas',vH);
+
+  const degR=(document.querySelector('input[name="degustacionRealizada"]:checked')||{}).value||'';
+  let dH='<div class="res-line"><span class="rk">¿Se realizaron degustaciones?</span><span class="rv">'+(degR||'—')+'</span></div>';
+  if(degR==='No') dH+='<div class="res-line"><span class="rk">Motivo</span><span class="rv">'+(escHtml(val('degustacionMotivoNo'))||'—')+'</span></div>';
+  if(degR==='Si'){ dH+=(degustacionesList.length?degustacionesList.map((p,i)=>'<div class="res-mini">'+(i+1)+'. <b>'+(escHtml(p.producto)||'—')+'</b> · '+(p.cantidad||0)+' botella(s)</div>').join(''):'<div class="res-mini">Sin vinos degustados</div>'); }
+  dH+='<div class="res-line"><span class="rk">Impactos</span><span class="rv">'+(escHtml(val('degustacionImpactos'))||'—')+'</span></div>';
+  h+=secRaw('i-wine','Degustaciones',dH);
+
+  let pH = premiosEntregados.length ? premiosEntregados.map(it=>'<div class="res-mini">• '+escHtml(it.producto)+': '+(it.cantidadEntregada!==''?it.cantidadEntregada:'—')+'</div>').join('') : '<div class="res-mini">Sin obsequios registrados</div>';
+  h+=secRaw('i-gift','Obsequios entregados',pH);
+
+  const vozH = vozList.length ? vozList.map((p,i)=>{
+    const op=OPINION_PRODUCTOS.find(o=>String(o.v)===String(p.opinionProductos));
+    const atributos=[...(p.atributosDeseados||[]), p.atributosOtro].filter(Boolean).join(', ');
+    const canales=[...(p.canalesConocimiento||[]), p.canalOtro].filter(Boolean).join(', ');
+    return '<div style="padding:7px 0;border-bottom:1px solid var(--line)">'+
+      '<div class="res-mini"><b>Consumidor '+(i+1)+'</b></div>'+
+      '<div class="res-mini">Vino preferido: '+(escHtml(p.tipoProductoPreferido)||'—')+' · ¿Ha escuchado la marca?: '+(escHtml(p.conoceMarca)||'—')+'</div>'+
+      (canales?'<div class="res-mini">Por dónde: '+escHtml(canales)+'</div>':'')+
+      '<div class="res-mini">¿La ha usado?: '+(escHtml(p.usoMarca)||'—')+' · Opinión: '+(op?op.e+' '+op.l:'—')+'</div>'+
+      (p.tipoCabello?'<div class="res-mini">Ocasión: '+escHtml(p.tipoCabello)+'</div>':'')+
+      (atributos?'<div class="res-mini">Le gustaría ver: '+escHtml(atributos)+'</div>':'')+
+      '<div class="res-mini">Percepción en el punto: '+(escHtml(p.percepcionPunto)||'—')+'</div>'+
+      (p.productoComentado?'<div class="res-mini">Producto comentado: '+escHtml(p.productoComentado)+'</div>':'')+
+      (p.mejoraria?'<div class="res-mini">Mejoraría: "'+escHtml(p.mejoraria)+'"</div>':'')+
+      ((p.edad||p.genero)?'<div class="res-mini">'+[p.edad,p.genero].filter(Boolean).map(escHtml).join(' · ')+'</div>':'')+
+    '</div>';
+  }).join('') : '<div class="res-mini">Sin opiniones registradas</div>';
+  h+=secRaw('i-chat','Voz del Consumidor ('+vozList.length+')', vozH);
+
+  let coH='<div class="res-line"><span class="rk">¿Actividad de la competencia?</span><span class="rv">'+(competenciaR||'—')+'</span></div>';
+  if(competenciaR==='Si'){ coH+=(competenciaList.length?competenciaList.map((p,i)=>'<div class="res-mini">'+(i+1)+'. <b>'+(escHtml(p.tipo)||'—')+'</b>'+(p.marca?' · '+escHtml(p.marca):'')+'</div>').join(''):'<div class="res-mini">Sin evidencias registradas</div>'); }
+  h+=secRaw('i-search','Actividad de la Competencia',coH);
+
+  h+='<div class="res-sec-h" style="margin-top:4px"><svg class="icon icon-sm"><use href="#i-list"/></svg>Estado de módulos</div>';
+  h+=MODS.filter(m=>m.id!=='salida').map(m=>'<div class="mod-state"><div class="ms-ic"><svg class="icon icon-sm"><use href="#'+m.icon+'"/></svg></div><div class="ms-name">'+m.label+'</div><span class="ms-tag '+(saved[m.id]?'ok':'no')+'">'+(saved[m.id]?'Guardado':'Pendiente')+'</span></div>').join('');
+  cont.innerHTML=h;
+}
+function sec(icon,titulo,lines){ return '<div class="res-sec"><div class="res-sec-h"><svg class="icon icon-sm"><use href="#'+icon+'"/></svg>'+titulo+'</div>'+lines.join('')+'</div>'; }
+function secRaw(icon,titulo,html){ return '<div class="res-sec"><div class="res-sec-h"><svg class="icon icon-sm"><use href="#'+icon+'"/></svg>'+titulo+'</div>'+html+'</div>'; }
+function ln(k,v){ return '<div class="res-line"><span class="rk">'+k+'</span><span class="rv">'+v+'</span></div>'; }
+
+// ===== COMPARTIR / WHATSAPP =====
+function generarTextoGestion(){
+  const ventaR=(document.querySelector('input[name="ventaRealizada"]:checked')||{}).value||'';
+  const competenciaR=(document.querySelector('input[name="competenciaHayActividad"]:checked')||{}).value||'';
+  const linea='━━━━━━━━━━━━━━';
+  let t='🍷🎄 *GESTIÓN MEICO*\n'+linea+'\n';
+  t+='👤 *'+(getAsesorNombre()||'-')+'*\n';
+  t+='🪪 Doc '+(getAsesorDocumento()||'-')+'\n';
+  if(getAsesorTelefono()) t+='📞 '+getAsesorTelefono()+'\n';
+  t+='🔑 Código de sesión: '+(registroId||'-')+'\n';
+  t+='🏙️ '+(getCiudad()||'-')+'\n';
+  t+='📍 '+(getPDV()||'-')+'\n';
+  if(ubicacion.lat&&ubicacion.lng) t+='🗺️ https://www.google.com/maps?q='+ubicacion.lat+','+ubicacion.lng+'\n';
+  t+='\n🛒 *VENTAS:* '+(ventaR||'-')+'\n';
+  if(ventaR==='No') t+='   ↳ Motivo: '+(val('ventaMotivoNo')||'-')+'\n';
+  if(ventaR==='Si'){ ventasList.forEach(p=>{ t+='   • '+(p.producto||'-')+'  _x'+(p.cantidad||0)+'_\n'; }); }
+  const degR=(document.querySelector('input[name="degustacionRealizada"]:checked')||{}).value||'';
+  t+='\n🍷 *DEGUSTACIONES:* '+(degR||'-')+'\n';
+  if(degR==='No') t+='   ↳ Motivo: '+(val('degustacionMotivoNo')||'-')+'\n';
+  if(degR==='Si'){ degustacionesList.forEach(p=>{ t+='   • '+(p.producto||'-')+'  _x'+(p.cantidad||0)+' botella(s)_\n'; }); }
+  if(val('degustacionImpactos')!=='') t+='   👥 Impactos: '+val('degustacionImpactos')+'\n';
+  if(premiosEntregados.length){ t+='\n🎁 *OBSEQUIOS ENTREGADOS*\n'; premiosEntregados.forEach(it=>{ t+='   • '+(it.producto||'-')+': '+(it.cantidadEntregada!==''?it.cantidadEntregada:'-')+'\n'; }); }
+  if(vozList.length){
+    t+='\n💬 *VOZ DEL CONSUMIDOR*\n';
+    vozList.forEach((p,i)=>{
+      const op=OPINION_PRODUCTOS.find(o=>String(o.v)===String(p.opinionProductos));
+      const atributos=[...(p.atributosDeseados||[]), p.atributosOtro].filter(Boolean).join(', ');
+      const canales=[...(p.canalesConocimiento||[]), p.canalOtro].filter(Boolean).join(', ');
+      t+='   ▸ Consumidor '+(i+1)+':\n';
+      t+='      • Vino preferido: '+(p.tipoProductoPreferido||'-')+'\n';
+      t+='      • ¿Ha escuchado la marca?: '+(p.conoceMarca||'-')+'\n';
+      if(canales) t+='      • Por dónde: '+canales+'\n';
+      t+='      • ¿La ha usado?: '+(p.usoMarca||'-')+'\n';
+      t+='      • Opinión sobre los productos: '+(op?op.e+' '+op.l:'-')+'\n';
+      if(p.tipoCabello) t+='      • Ocasión: '+p.tipoCabello+'\n';
+      if(atributos) t+='      • Le gustaría ver: '+atributos+'\n';
+      t+='      • Percepción en el punto: '+(p.percepcionPunto||'-')+'\n';
+      if(p.productoComentado) t+='      • Producto: '+p.productoComentado+'\n';
+      if(p.mejoraria) t+='      • Mejoraría: '+p.mejoraria+'\n';
+      if(p.edad) t+='      • Edad aprox.: '+p.edad+'\n';
+      if(p.genero) t+='      • Género: '+p.genero+'\n';
+    });
+  }
+  if(competenciaR==='Si'&&competenciaList.length){ t+='\n🔎 *ACTIVIDAD DE LA COMPETENCIA*\n'; competenciaList.forEach(p=>{ t+='   • '+(p.tipo||'-')+(p.marca?' · '+p.marca:'')+(p.descripcion?' — '+p.descripcion:'')+'\n'; }); }
+  if(val('proximaVisita')) t+='\n📅 Próxima visita: '+val('proximaVisita')+'\n';
+  if(val('observacionesGenerales')) t+='📝 '+val('observacionesGenerales')+'\n';
+  t+='\n_Enviado desde Meico · Synaptic_';
+  return t;
+}
+function compartirWhatsApp(){ window.open('https://wa.me/?text='+encodeURIComponent(generarTextoGestion()),'_blank'); }
+function copiarGestion(){
+  const t=generarTextoGestion();
+  if(navigator.clipboard&&navigator.clipboard.writeText){ navigator.clipboard.writeText(t).then(()=>toast('Copiado al portapapeles')).catch(()=>fallbackCopy(t)); }
+  else fallbackCopy(t);
+}
+function fallbackCopy(t){ const ta=document.createElement('textarea'); ta.value=t; ta.style.position='fixed'; ta.style.opacity='0'; document.body.appendChild(ta); ta.focus(); ta.select(); try{ document.execCommand('copy'); toast('Copiado al portapapeles'); }catch(e){ prompt('Copia manual:', t); } document.body.removeChild(ta); }
+function nuevaGestion(){ limpiarSesionLocal(); location.reload(); }
+function cerrarSesion(){
+  const aviso = registroId
+    ? '¿Cerrar tu sesión en este dispositivo?\n\nTu código de sesión es ' + registroId + '. Con ese código puedes recuperar la gestión desde "¿Ya tienes una gestión en curso?" en la pantalla de inicio.'
+    : '¿Cerrar tu sesión en este dispositivo?\n\nAún no has guardado el Ingreso, así que lo que llevas escrito se perderá.';
+  const pendientes=(_pillEl&&_pillEl.style.display!=='none'&&/pendiente/.test(_pillEl.textContent))?'\n\n⚠️ Tienes gestiones pendientes de envío (sin señal). Seguirán guardadas en este celular y se enviarán cuando haya buena señal; no borres los datos del navegador.':'';
+  if (!confirm(aviso+pendientes)) return;
+  limpiarSesionLocal();
+  location.reload();
+}
+
+// ===== UTILIDADES =====
+function val(id){ const el=document.getElementById(id); return el?el.value.trim():''; }
+function uid(pfx){ return pfx+'_'+Date.now()+'_'+Math.random().toString(36).slice(2,6); }
+function escAttr(s){ return String(s==null?'':s).replace(/"/g,'&quot;'); }
+function escHtml(s){ return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+</script>
+<!-- ============ TUTORIAL GUIADO (botón flotante + foco con fondo gris) ============ -->
+<style>
+  .tut-btn{position:fixed;right:14px;bottom:calc(env(safe-area-inset-bottom,0px) + 96px);width:46px;height:46px;border-radius:50%;border:1.5px solid rgba(255,255,255,.75);background:rgba(109,40,217,.5);color:#fff;font:800 22px/1 inherit;z-index:9000;-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);box-shadow:0 6px 16px rgba(0,0,0,.25);cursor:pointer;display:flex;align-items:center;justify-content:center;opacity:.82;padding:0;transition:opacity .2s,transform .2s}
+  .tut-btn:active{transform:scale(.92);opacity:1}
+  .tut-btn.pulse{animation:tutPulse 2.2s infinite}
+  @keyframes tutPulse{0%{box-shadow:0 0 0 0 rgba(109,40,217,.6)}70%{box-shadow:0 0 0 14px rgba(109,40,217,0)}100%{box-shadow:0 0 0 0 rgba(109,40,217,0)}}
+  .tut-layer{position:fixed;inset:0;z-index:100000;touch-action:none;background:transparent}
+  .tut-pane{position:fixed;z-index:100000;background:rgba(45,45,45,.66);-webkit-backdrop-filter:grayscale(1) blur(1.5px);backdrop-filter:grayscale(1) blur(1.5px);touch-action:none}
+  .tut-ring{position:fixed;z-index:100001;border-radius:14px;border:2.5px solid #fff;box-shadow:0 0 0 3px rgba(109,40,217,.92),0 0 18px 4px rgba(109,40,217,.5);pointer-events:none;transition:left .22s ease,top .22s ease,width .22s ease,height .22s ease}
+  .tut-tip{position:fixed;z-index:100002;left:12px;right:12px;max-width:390px;margin:0 auto;background:#fff;color:#1E1830;border-radius:18px;padding:14px 16px 12px;box-shadow:0 14px 44px rgba(0,0,0,.45);font-size:13.5px;line-height:1.45}
+  .tut-ctx{font-size:11px;font-weight:700;letter-spacing:.4px;text-transform:uppercase;color:#6D28D9;margin-bottom:3px}
+  .tut-tt{font-size:15.5px;font-weight:800;margin-bottom:5px}
+  .tut-tx{margin:0 0 11px}
+  .tut-act{display:flex;align-items:center;gap:8px}
+  .tut-cnt{font-size:11.5px;color:#6F6585;font-weight:700;flex:1}
+  .tut-act button{border:0;border-radius:11px;padding:9px 14px;font:700 13px/1 inherit;cursor:pointer;min-height:38px}
+  .tut-b-sec{background:#EEEAF5;color:#1E1830}
+  .tut-b-pri{background:#6D28D9;color:#fff}
+  .tut-b-x{background:transparent;color:#6F6585;padding:9px 6px !important}
+</style>
+<script>
+(function(){
+  'use strict';
+  var LS_VISTO = 'meiconavidad_tutorial_visto';
+  var LS_VOZ = 'meiconavidad_tutorial_voz';
+  var vozTut = true; try { vozTut = localStorage.getItem(LS_VOZ) !== '0'; } catch (e) {}
+  /* El tutorial lee en voz alta cada paso (se puede silenciar con el botón 🔊) */
+  function hablarTut(texto){
+    if (!vozTut || !('speechSynthesis' in window)) return;
+    try {
+      speechSynthesis.cancel();
+      var u = new SpeechSynthesisUtterance(String(texto).replace(/🔒/g, ' candado ').replace(/[✓✔]/g, ' check ').replace(/[*"]/g, ''));
+      u.lang = 'es-CO'; u.rate = 1.0;
+      var v = speechSynthesis.getVoices().filter(function(x){ return /^es/i.test(x.lang); })[0];
+      if (v) u.voice = v;
+      speechSynthesis.speak(u);
+    } catch (e) {}
+  }
+  function alternarVozTut(){
+    vozTut = !vozTut;
+    try { localStorage.setItem(LS_VOZ, vozTut ? '1' : '0'); } catch (e) {}
+    if (!vozTut && window.speechSynthesis) speechSynthesis.cancel();
+    mostrar();
+  }
+  var activo = false, pasos = [], idx = 0, btn = null, layer = null, ring = null, tip = null, panes = [];
+
+  // ---------- utilidades ----------
+  function $(s, r){ return (r || document).querySelector(s); }
+  function visible(el){
+    if (!el || !el.getClientRects || !el.getClientRects().length) return false;
+    var cs = getComputedStyle(el);
+    return cs.visibility !== 'hidden' && cs.display !== 'none';
+  }
+  function resolver(sel){
+    try { return typeof sel === 'function' ? sel() : $(sel); } catch (e) { return null; }
+  }
+  function enContextoFijo(el){
+    for (var n = el; n && n !== document.body; n = n.parentElement) {
+      if (getComputedStyle(n).position === 'fixed') return true;
+    }
+    return false;
+  }
+  function campo(id){ var e = document.getElementById(id); return e ? (e.closest('.field') || e) : null; }
+  function mod(id){ return '[data-mod="' + id + '"]'; }
+  function etiquetaModulo(){
+    try { var m = MODS.filter(function(x){ return x.id === current; })[0]; return m ? m.label : ''; } catch (e) { return ''; }
+  }
+  function P(sel, titulo, texto){ var el = resolver(sel); return visible(el) ? { el: el, t: titulo, x: texto } : null; }
+  function compactar(arr){ return arr.filter(Boolean); }
+
+  // ---------- pasos por pantalla ----------
+  function pasosGenerales(){
+    return compactar([
+      P('.progress-wrap', 'Barra de avance', 'Te dice en qué módulo estás y cuáles ya guardaste: cada raya se marca al guardar su módulo.'),
+      P('#btnPersona', 'Mi información', 'Abre tus datos, el punto de venta actual y tu CÓDIGO DE SESIÓN, que sirve para recuperar la gestión si cambias de celular o se cierra la app.'),
+      P('#fab', 'Menú de módulos', 'Te mueve entre Ingreso, Ventas, Degustación, Obsequios, Voz del Consumidor, Competencia y Salida. El candado 🔒 indica módulo bloqueado (falta guardar el Ingreso) y el check ✓, módulo guardado.'),
+      P(function(){ return (typeof _pillEl !== 'undefined' && _pillEl && _pillEl.style.display !== 'none') ? _pillEl : null; }, 'Pendientes por enviar', 'Este aviso aparece cuando no había buena señal: tu información quedó guardada en el celular y se envía sola al volver la red. Tócalo para reintentar ya.'),
+      P('#btnSalir', 'Cerrar sesión', 'Cierra tu sesión en este celular. Úsalo solo al terminar tu jornada; de todas formas, la sesión se cierra sola a las 11:00 p. m.')
+    ]);
+  }
+  function guardar(id, titulo, texto){ return P(mod(id) + ' .save-row .btn', titulo, texto); }
+
+  function pasosPortada(){
+    return compactar([
+      P('#identManual', 'Tus datos', 'Escribe tu nombre completo y tu número de documento (solo números). Con ellos queda registrada tu visita.'),
+      P(function(){ var e = visible($('#ciudadTexto')) ? $('#ciudadTexto') : $('#ciudad'); return e && (e.closest('.pselect') || e); },
+        'Ciudad', 'Elige la ciudad donde vas a trabajar hoy. Al elegirla se habilita la lista de puntos de venta.'),
+      P(function(){ var e = visible($('#pdvTexto')) ? $('#pdvTexto') : $('#puntoVenta'); return e && (e.closest('.pselect') || e); },
+        'Punto de venta', 'Selecciona el punto donde estás. Si aparece deshabilitado, primero elige la ciudad.'),
+      P('.btn-portada', 'Comenzar', 'Inicia tu visita: pide permiso para la ubicación GPS (acéptalo), crea tu gestión y abre el módulo de Ingreso.'),
+      P('.portada-foot a', 'Recuperar sesión', 'Si ya empezaste una gestión y perdiste la sesión (cambio de celular, borraste datos), toca aquí e ingresa tu código de sesión para continuar donde ibas.')
+    ]);
+  }
+
+  function pasosModulo(id){
+    var M = mod(id), h = M + ' .card-head';
+    switch (id) {
+      case 'ingreso': return compactar([
+        P(h, 'Ingreso al PDV', 'Aquí empieza tu visita. Es obligatorio: hasta que lo guardes, los demás módulos están bloqueados con candado 🔒. Necesitas ubicación GPS y una foto.'),
+        P(M + ' .merc-chip', 'Tus datos', 'Muestra tu nombre y documento. Si te equivocaste, toca "Cambiar" para volver a la pantalla de inicio.'),
+        P(function(){ return document.querySelectorAll(M + ' .merc-chip')[1]; }, 'Punto de venta', 'El punto y la ciudad donde estás trabajando. Verifica que sean los correctos antes de guardar.'),
+        P('#locBox', 'Ubicación GPS (obligatoria)', 'Se captura al pulsar Comenzar. Cuando se pone verde, quedó registrada y verás la precisión en metros. Es la prueba de que estás en el punto.'),
+        P('#btnGPS', 'Actualizar ubicación', 'Si el GPS falló o te moviste, toca aquí para capturarla de nuevo. Funciona mejor en un lugar abierto y con la ubicación del celular activada.'),
+        P('#uploadIngreso', 'Foto de ingreso (obligatoria)', 'Toca el recuadro para abrir la cámara y toma la foto de la entrada o fachada del punto. "Cambiar" la repite y "Quitar" la elimina. Sin foto no se puede guardar.'),
+        guardar(id, 'Guardar Ingreso', 'Guarda tu entrada y desbloquea los demás módulos. Si no hay buena señal, se guarda en el celular y se envía sola cuando vuelva la red.')
+      ]);
+      case 'ventas': return compactar([
+        P(h, 'Ventas', 'Registra lo que se vendió en esta visita. Todo queda asociado a tu punto de venta.'),
+        P(M + ' .info-banner', 'Catálogo activo', 'Muestra cuántos vinos Meico tienes disponibles para registrar ventas.'),
+        P(M + ' .opt-grid', '¿Se realizó venta? (obligatorio)', 'Elige Sí si vendiste algo o No si no hubo venta. Con Sí se abre la lista de productos y cantidades; con No te pide el motivo.'),
+        P('#ventaNo', 'Motivo de no venta', 'Selecciona por qué no hubo venta (aún tiene inventario, local cerrado, etc.).'),
+        P('#listaVentas .item', 'Producto vendido', 'Toca el campo del vino para buscarlo y elegirlo, y escribe las unidades vendidas. El tacho rojo elimina esta línea.'),
+        P('#ventaSi > .btn', 'Agregar producto vendido', 'Añade una línea por cada producto distinto que vendiste.'),
+        guardar(id, 'Guardar Ventas', 'Guarda este módulo. Puedes volver, corregir y guardar de nuevo cuando quieras.')
+      ]);
+      case 'degustaciones': return compactar([
+        P(h, 'Degustaciones', 'Registra los vinos que diste a probar en el punto. Recuerda: solo a mayores de edad.'),
+        P('#bannerDegustacion', 'Vinos para degustar', 'Son los vinos habilitados para degustación en esta campaña.'),
+        P(M + ' .opt-grid', '¿Se realizaron degustaciones? (obligatorio)', 'Con Sí agregas cada vino y las botellas usadas; con No te pide el motivo.'),
+        P('#listaDegustaciones .item', 'Vino degustado', 'Toca el campo para elegir el vino y escribe cuántas botellas usaste (puedes poner 0,5).'),
+        P(function(){ return campo('degustacionImpactos'); }, 'Impactos (obligatorio)', 'Cuántas personas abordaste en total, hayan probado o no. Usa 0 si no hubo.'),
+        guardar(id, 'Guardar Degustaciones', 'Guarda este módulo. Puedes volver a corregirlo cuando quieras.')
+      ]);
+      case 'premios': return compactar([
+        P(h, 'Obsequios entregados', 'Aquí registras cuántos obsequios entregaste a los consumidores en el punto.'),
+        P(M + ' .info-banner', 'Control de obsequios', 'Debes registrar la cantidad de CADA obsequio, aunque sea 0.'),
+        P('#listaEntregaPremios > div', 'Cantidad entregada', 'Cada fila es un obsequio: escribe a la derecha cuántos entregaste. Usa 0 si no entregaste ninguno.'),
+        P(function(){ return campo('premiosObservaciones'); }, 'Observaciones', 'Opcional: notas sobre los obsequios o las entregas.'),
+        P(function(){ return campo('uploadPremios'); }, 'Foto del inventario (opcional)', 'Foto de los obsequios que quedan en el punto, como evidencia.'),
+        guardar(id, 'Guardar Obsequios', 'Guarda este módulo. Si te falta una cantidad, te avisará cuál.')
+      ]);
+      case 'voz': if (!$('#listaVoz').children.length) renderVoz(); /* pinta el aviso "agrega la opinión" si aún no se ha dibujado */
+        return compactar([
+        P(h, 'Voz del Consumidor', 'Aquí registras la opinión de los consumidores con quienes hablaste: un bloque por cada persona.'),
+        P('#listaVoz .item', 'Bloque de un consumidor', 'Responde tocando las opciones con caritas; las marcadas con * son obligatorias. El tacho rojo elimina a este consumidor.'),
+        P('#listaVoz .empty-hint', 'Aún no hay opiniones', 'Cuando hables con un consumidor, agrégalo con el botón de abajo.'),
+        P(M + ' .card > .btn.btn-soft', 'Agregar opinión', 'Abre el formulario de un nuevo consumidor. Repite por cada persona que encuestes.'),
+        guardar(id, 'Guardar Voz del Consumidor', 'Guarda todas las opiniones capturadas. Se revisa que no falte ninguna respuesta obligatoria.')
+      ]);
+      case 'competencia': return compactar([
+        P(h, 'Actividad de la Competencia', 'Reporta si hay marcas competidoras haciendo exhibición, promoción o impulso en el punto, con foto como evidencia.'),
+        P(M + ' .opt-grid', '¿Hay actividad? (obligatorio)', 'Elige Sí o No. Con Sí podrás agregar cada evidencia con tipo de actividad, marca, descripción y foto.'),
+        P('#listaCompetencia .item', 'Evidencia', 'Selecciona el tipo de actividad, escribe la marca y una descripción, y toma la foto (obligatoria). El tacho rojo elimina esta evidencia.'),
+        P('#competenciaSi > .btn', 'Agregar evidencia', 'Añade una evidencia por cada actividad distinta que observes.'),
+        guardar(id, 'Guardar Actividad de la Competencia', 'Guarda este módulo. Si dijiste "No", basta con guardar.')
+      ]);
+      case 'salida': return compactar([
+        P(h, 'Salida del PDV', 'Es el cierre de tu visita. Revisa todo antes de finalizar.'),
+        P('#resumenContenido', 'Resumen de tu gestión', 'Aquí ves lo que capturaste y, al final, el estado de cada módulo: "Guardado" o "Pendiente". Vuelve a los pendientes antes de finalizar.'),
+        P('#uploadSalida', 'Foto de salida (obligatoria)', 'Toma una foto al salir del punto. Sin ella no se puede finalizar la gestión.'),
+        P(function(){ return campo('proximaVisita'); }, 'Próxima visita', 'Opcional: la fecha en que volverás al punto.'),
+        P(function(){ return campo('observacionesGenerales'); }, 'Observaciones finales', 'Opcional: compromisos y notas de la visita.'),
+        P(function(){ var b = $(M + ' .btn-success'); return b && b.parentElement; }, 'Compartir', 'WhatsApp envía el resumen a quien quieras y Copiar lo copia para pegarlo donde lo necesites.'),
+        guardar(id, 'Finalizar gestión', 'Cierra la visita y envía todo. Después aparece el número de registro y puedes iniciar una nueva gestión.')
+      ]);
+    }
+    return [];
+  }
+
+  // Detecta en qué parte de la herramienta está el usuario y arma los pasos de esa pantalla.
+  function construirPasos(){
+    function modal(id){ var e = document.getElementById(id); return e && e.classList.contains('show'); }
+    if (modal('successModal')) return { ctx: 'Gestión finalizada', pasos: compactar([ P('#successModal .modal', 'Gestión finalizada', 'Tu visita quedó registrada. Si no hubo buena señal, dirá "pendiente de envío" y se enviará sola. Toca "Nueva gestión" para empezar otra visita.') ]) };
+    if (modal('codigoSesionModal')) return { ctx: 'Código de sesión', pasos: compactar([ P('#codigoSesionModal .modal', 'Tu código de sesión', 'Es la llave para recuperar esta gestión si cambias de celular o se borran los datos. Cópialo o anótalo y toca "Entendido".') ]) };
+    if (modal('recuperarModal')) return { ctx: 'Recuperar sesión', pasos: compactar([ P('#recuperarModal .modal', 'Recuperar sesión', 'Escribe aquí el código de sesión que recibiste al iniciar (empieza por MNV-) y toca "Recuperar" para continuar tu gestión.') ]) };
+    if (modal('personaModal')) return { ctx: 'Mi información', pasos: compactar([
+      P('#personaModal .modal', 'Mi información', 'Tus datos de asesor, la ciudad y el catálogo de vinos.'),
+      P(function(){ var e = $('#pCodigoSesion'); return e && e.closest('.merc-chip'); }, 'Código de sesión', 'Guárdalo: te permite recuperar esta gestión desde otro celular. "Copiar" lo copia al portapapeles.'),
+      P(function(){ var e = $('#pPdvActual'); return e && e.closest('.merc-chip'); }, 'Punto de venta', 'Si cambias de punto, toca "Cambiar" para volver a la pantalla de inicio.')
+    ]) };
+    if (typeof modgridOpen !== 'undefined' && modgridOpen) return { ctx: 'Módulos', pasos: compactar([ P('#modgrid', 'Menú de módulos', 'Toca un módulo para ir a él. 🔒 = bloqueado hasta guardar el Ingreso; ✓ = ya guardado. Puedes volver a cualquiera para corregirlo.') ]) };
+    var portada = document.getElementById('portada');
+    if (portada && portada.style.display !== 'none' && !portada.classList.contains('hide')) return { ctx: 'Inicio', pasos: pasosPortada() };
+    return { ctx: etiquetaModulo() || 'Módulo', pasos: pasosModulo(current).concat(pasosGenerales()) };
+  }
+
+  // ---------- interfaz ----------
+  function crearDOM(){
+    layer = document.createElement('div'); layer.className = 'tut-layer';
+    panes = []; for (var i = 0; i < 4; i++) { var p = document.createElement('div'); p.className = 'tut-pane'; panes.push(p); }
+    ring = document.createElement('div'); ring.className = 'tut-ring';
+    tip = document.createElement('div'); tip.className = 'tut-tip'; tip.setAttribute('role', 'dialog'); tip.setAttribute('aria-live', 'polite');
+    document.body.appendChild(layer); panes.forEach(function(p){ document.body.appendChild(p); });
+    document.body.appendChild(ring); document.body.appendChild(tip);
+    window.addEventListener('resize', reposicionar); window.addEventListener('scroll', reposicionar, true);
+    document.addEventListener('keydown', teclas);
+  }
+  function quitarDOM(){
+    [layer, ring, tip].concat(panes).forEach(function(n){ if (n && n.parentNode) n.parentNode.removeChild(n); });
+    layer = ring = tip = null; panes = [];
+    window.removeEventListener('resize', reposicionar); window.removeEventListener('scroll', reposicionar, true);
+    document.removeEventListener('keydown', teclas);
+  }
+  function teclas(e){ if (e.key === 'Escape') cerrar(); else if (e.key === 'ArrowRight') siguiente(); else if (e.key === 'ArrowLeft') anterior(); }
+
+  function traerAVista(el){
+    if (enContextoFijo(el)) return;
+    var vh = window.innerHeight, r = el.getBoundingClientRect();
+    var tb = $('.topbar'), th = tb ? tb.getBoundingClientRect().bottom : 0;
+    var alto = Math.min(r.height, vh * 0.45);
+    var deseado = Math.max(th + 14, (vh - alto) / 2 - 70);
+    window.scrollTo(0, Math.max(0, window.pageYOffset + r.top - deseado));
+  }
+
+  function mostrar(){
+    var p = pasos[idx]; if (!p) return;
+    var ultimo = idx === pasos.length - 1;
+    tip.innerHTML = '<div class="tut-ctx">Tutorial · ' + esc(pasos.ctx) + '</div>' +
+      '<div class="tut-tt">' + esc(p.t) + '</div><p class="tut-tx">' + esc(p.x) + '</p>' +
+      '<div class="tut-act"><span class="tut-cnt">' + (idx + 1) + ' de ' + pasos.length + '</span>' +
+      '<button type="button" class="tut-b-x" data-a="v" aria-label="Voz del tutorial" title="Voz del tutorial">' + (vozTut ? '🔊' : '🔇') + '</button>' +
+      '<button type="button" class="tut-b-x" data-a="x">Salir</button>' +
+      (idx > 0 ? '<button type="button" class="tut-b-sec" data-a="p">Anterior</button>' : '') +
+      '<button type="button" class="tut-b-pri" data-a="n">' + (ultimo ? '¡Listo!' : 'Siguiente') + '</button></div>';
+    traerAVista(p.el);
+    reposicionar();
+    hablarTut(p.t + '. ' + p.x);
+  }
+  function esc(s){ return String(s).replace(/[&<>"']/g, function(c){ return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+
+  function reposicionar(){
+    if (!activo || !tip) return;
+    var p = pasos[idx]; if (!p || !p.el) return;
+    var vw = window.innerWidth, vh = window.innerHeight, r = p.el.getBoundingClientRect(), pad = 6;
+    var x = Math.max(4, r.left - pad), y = Math.max(4, r.top - pad);
+    var w = Math.min(vw - 4, r.right + pad) - x, h = Math.min(vh - 4, r.bottom + pad) - y;
+    if (w < 24) w = 24; if (h < 24) h = 24;
+    var th = tip.offsetHeight, top;
+    if (vh - (y + h) >= th + 16) top = y + h + 10;
+    else if (y >= th + 16) top = y - th - 10;
+    else { h = Math.max(60, Math.min(h, vh - th - 30 - y)); top = vh - th - 12; } /* elemento muy alto: se resalta su parte visible y la tarjeta va abajo */
+    tip.style.top = Math.max(8, top) + 'px';
+    ring.style.left = x + 'px'; ring.style.top = y + 'px'; ring.style.width = w + 'px'; ring.style.height = h + 'px';
+    var g = [ [0, 0, vw, y], [0, y + h, vw, Math.max(0, vh - y - h)], [0, y, x, h], [x + w, y, Math.max(0, vw - x - w), h] ];
+    panes.forEach(function(pn, i){ pn.style.left = g[i][0] + 'px'; pn.style.top = g[i][1] + 'px'; pn.style.width = g[i][2] + 'px'; pn.style.height = g[i][3] + 'px'; });
+  }
+
+  function siguiente(){ if (idx >= pasos.length - 1) { cerrar(); return; } idx++; mostrar(); }
+  function anterior(){ if (idx > 0) { idx--; mostrar(); } }
+  function abrir(){
+    if (activo) return;
+    var c = construirPasos();
+    if (!c.pasos.length) { try { toast('No hay nada que explicar en esta pantalla todavía.', true); } catch (e) {} return; }
+    pasos = c.pasos; pasos.ctx = c.ctx; idx = 0; activo = true;
+    try { localStorage.setItem(LS_VISTO, '1'); } catch (e) {}
+    btn.classList.remove('pulse'); btn.style.display = 'none';
+    crearDOM();
+    tip.addEventListener('click', function(e){
+      var a = e.target && e.target.getAttribute && e.target.getAttribute('data-a');
+      if (a === 'n') siguiente(); else if (a === 'p') anterior(); else if (a === 'x') cerrar(); else if (a === 'v') alternarVozTut();
+    });
+    mostrar();
+  }
+  function cerrar(){ if (!activo) return; activo = false; try { if (window.speechSynthesis) speechSynthesis.cancel(); } catch (e) {} quitarDOM(); btn.style.display = 'flex'; }
+
+  // ---------- botón flotante ----------
+  function iniciar(){
+    btn = document.createElement('button');
+    btn.type = 'button'; btn.className = 'tut-btn'; btn.textContent = '?';
+    btn.setAttribute('aria-label', 'Tutorial: explica la pantalla en la que estás'); btn.title = 'Tutorial';
+    var visto = false; try { visto = !!localStorage.getItem(LS_VISTO); } catch (e) {}
+    if (!visto) btn.classList.add('pulse'); /* llama la atención hasta que lo usen por primera vez */
+    btn.addEventListener('click', abrir);
+    document.body.appendChild(btn);
+  }
+  if (document.body) iniciar(); else document.addEventListener('DOMContentLoaded', iniciar);
+  window.abrirTutorial = abrir;
+})();
+</script>
+
+<!-- ============ ARIA · AYUDA CON IA Y VOZ ============ -->
+<style>
+  .aria-btn{position:fixed;right:9px;bottom:calc(env(safe-area-inset-bottom,0px) + 156px);z-index:9000;width:56px;height:56px;border-radius:50%;border:2px solid #00d4ff;padding:0;cursor:pointer;background:#050a10;overflow:hidden;box-shadow:0 0 0 3px rgba(0,212,255,.25),0 8px 22px rgba(0,0,0,.35)}
+  .aria-btn img{width:100%;height:100%;object-fit:cover;display:block}
+  .aria-btn:active{transform:scale(.94)}
+  .aria-panel{position:fixed;inset:0;z-index:9500;display:none;background:rgba(10,8,8,.55);align-items:flex-end;justify-content:center}
+  .aria-panel.open{display:flex}
+  .aria-card{width:100%;max-width:520px;height:min(86vh,700px);background:#fff;color:#1E1830;border-radius:20px 20px 0 0;display:flex;flex-direction:column;padding:14px 16px calc(12px + env(safe-area-inset-bottom,0px));box-shadow:0 -10px 40px rgba(0,0,0,.25)}
+  .aria-head{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+  .aria-head img{width:40px;height:40px;border-radius:50%;object-fit:cover;border:2px solid #00d4ff}
+  .aria-head .aria-tit{flex:1;line-height:1.2}
+  .aria-head .aria-tit b{font-size:16px;font-weight:800;display:block}
+  .aria-head .aria-tit span{font-size:11.5px;color:#6F6585}
+  .aria-head .aria-x{border:0;background:#EEEAF5;border-radius:10px;padding:8px 12px;font-weight:700;cursor:pointer}
+  .aria-conectando{flex:1;display:none;flex-direction:column;align-items:center;justify-content:center;gap:14px;text-align:center}
+  .aria-conectando.on{display:flex}
+  .aria-anillo{width:64px;height:64px;border-radius:50%;border:4px solid #d9f7ff;border-top-color:#00a8d6;animation:ariaGira .9s linear infinite}
+  @keyframes ariaGira{to{transform:rotate(360deg)}}
+  .aria-conectando p{margin:0;font-size:14.5px;color:#3F3854}
+  .aria-chat{flex:1;display:none;flex-direction:column;min-height:0}
+  .aria-chat.on{display:flex}
+  .aria-log{flex:1;overflow:auto;display:flex;flex-direction:column;gap:8px;padding:4px 2px 10px}
+  .aria-m{padding:10px 12px;border-radius:14px;font-size:14.5px;line-height:1.45;max-width:92%;white-space:pre-wrap;word-wrap:break-word}
+  .aria-m.u{align-self:flex-end;background:#e8f9fd;border:1px solid #bde9f5}
+  .aria-m.a{align-self:flex-start;background:#F4F1F9}
+  .aria-prod{align-self:flex-start;display:flex;gap:10px;max-width:92%;background:#fff;border:1px solid #E2DAF0;border-radius:14px;padding:8px;box-shadow:0 2px 8px rgba(0,0,0,.06)}
+  .aria-prod img{width:84px;height:84px;object-fit:contain;border-radius:10px;background:#F8F5FC;flex-shrink:0}
+  .aria-prod-txt{font-size:13px;line-height:1.35;min-width:0}
+  .aria-prod-txt b{display:block;font-size:13.5px}
+  .aria-prod-txt span{display:block;color:#6F6585;font-size:11.5px;margin:1px 0 4px}
+  .aria-prod-txt ul{margin:0;padding-left:16px}
+  .aria-cat{align-self:stretch;display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+  .aria-cat .it{background:#fff;border:1px solid #E2DAF0;border-radius:14px;padding:8px;text-align:center;font-size:12px;line-height:1.3;box-shadow:0 2px 8px rgba(0,0,0,.05)}
+  .aria-cat .it img{width:100%;height:96px;object-fit:contain;background:#F8F5FC;border-radius:10px;margin-bottom:6px}
+  .aria-cat .it b{display:block;font-size:12px}
+  .aria-cat .it span{color:#6F6585;font-size:11px}
+  .aria-guia{align-self:stretch;background:#fff;border:1px solid #E2DAF0;border-radius:14px;padding:10px;box-shadow:0 2px 8px rgba(0,0,0,.05)}
+  .aria-guia h4{margin:0 0 8px;font-size:13.5px}
+  .aria-tel{width:158px;height:268px;margin:0 auto;border:5px solid #1E1830;border-radius:22px;background:#fff;overflow:hidden;position:relative}
+  .aria-tel-h{background:linear-gradient(135deg,#6D28D9,#2E1065);color:#fff;font-size:10px;font-weight:800;padding:9px 8px}
+  .aria-tel-b{padding:6px 6px 0;animation:ariaFade .45s ease}
+  @keyframes ariaFade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+  .aria-it{position:relative;margin:6px 0;border:1px solid #E2DAF0;border-radius:8px;padding:7px;font-size:9.5px;line-height:1.25;background:#fff}
+  .aria-it.ft{height:46px;display:flex;align-items:center;justify-content:center;background:#f5f1f1;color:#6F6585}
+  .aria-it.bt{background:#6D28D9;color:#fff;text-align:center;font-weight:800;border-color:#6D28D9}
+  .aria-it.foco{border-color:#6D28D9;box-shadow:0 0 0 2px rgba(109,40,217,.35);animation:ariaFoco 1.2s infinite}
+  .aria-it.foco::after{content:'👆';position:absolute;right:6px;bottom:-16px;font-size:20px;animation:ariaToque 1.2s infinite}
+  @keyframes ariaFoco{0%,100%{box-shadow:0 0 0 2px rgba(109,40,217,.35)}50%{box-shadow:0 0 0 6px rgba(109,40,217,.12)}}
+  @keyframes ariaToque{0%,100%{transform:translateY(0) scale(1)}50%{transform:translateY(-5px) scale(.92)}}
+  .aria-cap{margin:10px 0 6px;font-size:13.5px;line-height:1.4;min-height:56px}
+  .aria-cap b{display:block;color:#6D28D9;font-size:11.5px;letter-spacing:.3px;text-transform:uppercase}
+  .aria-ctl{display:flex;align-items:center;gap:6px;justify-content:center}
+  .aria-ctl button{border:0;border-radius:10px;min-width:40px;min-height:38px;background:#EEEAF5;font-size:15px;cursor:pointer}
+  .aria-pts{display:flex;gap:4px;justify-content:center;margin:6px 0 0}
+  .aria-pts i{width:7px;height:7px;border-radius:50%;background:#D6CDE6}
+  .aria-pts i.on{background:#6D28D9}
+  .aria-sug{display:flex;flex-wrap:wrap;gap:6px;margin:4px 0 8px}
+  .aria-sug button{border:1px solid #D6CDE6;background:#fff;border-radius:16px;padding:6px 10px;font-size:12.5px;cursor:pointer;color:#1E1830}
+  .aria-row{display:flex;gap:8px;align-items:center}
+  .aria-row input{flex:1;border:1.5px solid #D6CDE6;border-radius:12px;padding:12px;font-size:16px;min-height:44px;min-width:0}
+  .aria-mic,.aria-voz,.aria-send{border:0;border-radius:12px;min-width:46px;min-height:46px;cursor:pointer;font-weight:800;color:#fff;background:#00a8d6}
+  .aria-voz{background:#3F3854}
+  .aria-mic.on{background:#1a7f37;animation:ariaPulse 1.2s infinite}
+  .aria-mic:disabled{opacity:.4;cursor:not-allowed}
+  @keyframes ariaPulse{0%{box-shadow:0 0 0 0 rgba(26,127,55,.6)}70%{box-shadow:0 0 0 10px rgba(26,127,55,0)}100%{box-shadow:0 0 0 0 rgba(26,127,55,0)}}
+  .aria-nota{font-size:11.5px;color:#6F6585;margin-top:6px}
+</style>
+<button class="aria-btn" id="ariaBtn" type="button" aria-label="Abrir ARIA, asistente con voz"><img src="aria.png" alt="ARIA"></button>
+<div class="aria-panel" id="ariaPanel" role="dialog" aria-modal="true" aria-label="ARIA asistente">
+  <div class="aria-card">
+    <div class="aria-head">
+      <img src="aria.png" alt="">
+      <div class="aria-tit"><b>ARIA</b><span>Asistente de Meico</span></div>
+      <button class="aria-x" id="ariaCerrar" type="button">Cerrar</button>
+    </div>
+    <div class="aria-conectando on" id="ariaConectando">
+      <div class="aria-anillo"></div>
+      <p>Conectando con ARIA…</p>
+    </div>
+    <div class="aria-chat" id="ariaChat">
+      <div class="aria-log" id="ariaLog">
+        <div class="aria-m a">Hola, soy ARIA 🎄. Te ayudo con la herramienta Meico, la campaña y nuestros vinos. Escribe o habla, o toca una guía animada para ver cómo se hace paso a paso.</div>
+      </div>
+      <div class="aria-sug" id="ariaSug">
+        <button type="button" data-g="completa">▶ Recorrido completo</button>
+        <button type="button" data-g="ingreso">▶ Ingresar al PDV</button>
+        <button type="button" data-g="venta">▶ Registrar venta</button>
+        <button type="button" data-g="degustacion">▶ Degustación</button>
+        <button type="button" data-g="premios">▶ Obsequios</button>
+        <button type="button" data-g="salida">▶ Salir del PDV</button>
+        <button type="button" data-tut="1">🎓 Tutorial hablado</button>
+        <button type="button" data-cat="1">🍷 Ver vinos</button>
+      </div>
+      <div class="aria-row">
+        <button class="aria-mic" id="ariaMic" type="button" aria-label="Hablar" title="Hablar">🎤</button>
+        <input id="ariaTexto" type="text" placeholder="Escribe tu pregunta…" maxlength="400" autocomplete="off">
+        <button class="aria-send" id="ariaEnviar" type="button" aria-label="Enviar">➤</button>
+        <button class="aria-voz" id="ariaVoz" type="button" aria-label="Activar o silenciar voz" title="Voz de respuesta">🔊</button>
+      </div>
+      <div class="aria-nota" id="ariaNota">Solo respondo sobre la herramienta, la campaña y los vinos Meico.</div>
+    </div>
+  </div>
+</div>
+<script>
+(function(){
+  'use strict';
+  // Endpoint: el mismo Apps Script de la app. La clave de Groq vive en el servidor, nunca aquí.
+  var ARIA_URL = (typeof GAS_URL !== 'undefined') ? GAS_URL : '';
+  var vozActiva = true, enviando = false, conectada = false, timerConexion = null, guiaTimer = null;
+  var $ = function(id){ return document.getElementById(id); };
+  var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  var TTS = window.speechSynthesis;
+
+  // ---------- Catálogo (igual al del Apps Script) ----------
+  var CATALOGO = [
+    {id:'nuit-doree-rose', nombre:'Nuit Doree Rose', tipo:'Rosé', linea:'Nuit Dorée', tamano:''},
+    {id:'nuit-doree-rose-demisec-ice', nombre:'Nuit Dorée Rosé Demi-Sec Ice Edition', tipo:'Rosé demi-sec', linea:'Nuit Dorée', tamano:'Ice Edition'},
+    {id:'nuit-doree-blanco-sec-ice', nombre:'Nuit Dorée Blanco Sec Ice Edition (Seco)', tipo:'Blanco seco', linea:'Nuit Dorée', tamano:'Ice Edition'},
+    {id:'nuit-doree-black-ice', nombre:'Nuit Dorée Blanco Sec (Black Ice Edition)', tipo:'Blanco seco', linea:'Nuit Dorée', tamano:'Black Ice Edition'},
+    {id:'boticello-rose', nombre:'Boticello Rose', tipo:'Rosé', linea:'Botticello', tamano:''},
+    {id:'lambrusco-bianco-dolce', nombre:'Lambrusco Botticello Bianco Dolce', tipo:'Lambrusco blanco dulce', linea:'Botticello', tamano:''},
+    {id:'lambrusco-rosato-dolce', nombre:'Lambrusco Botticello Rosato Dolce', tipo:'Lambrusco rosado dulce', linea:'Botticello', tamano:''},
+    {id:'lambrusco-rosso-dolce', nombre:'Lambrusco Botticello Rosso Dolce', tipo:'Lambrusco tinto dulce', linea:'Botticello', tamano:''},
+    {id:'terra-vega-carmenere', nombre:'Terra Vega Carmenere', tipo:'Tinto', linea:'Terra Vega', tamano:''},
+    {id:'terra-vega-cabernet', nombre:'Terra Vega Cabernet Sauvignon', tipo:'Tinto', linea:'Terra Vega', tamano:''},
+    {id:'terra-vega-merlot', nombre:'Terra Vega Merlot', tipo:'Tinto', linea:'Terra Vega', tamano:''},
+    {id:'terra-vega-malbec', nombre:'Terra Vega Malbec', tipo:'Tinto', linea:'Terra Vega', tamano:''},
+    {id:'terra-vega-sauvignon-blanc', nombre:'Terra Vega Sauvignon Blanc', tipo:'Blanco', linea:'Terra Vega', tamano:''},
+    {id:'terra-vega-rosado', nombre:'Terra Vega Rosado', tipo:'Rosado', linea:'Terra Vega', tamano:''},
+    {id:'mucho-mas', nombre:'Mucho Mas', tipo:'Vino', linea:'Mucho Más', tamano:''},
+    {id:'mucho-mas-negra', nombre:'Mucho Más Blend · Etiqueta Negra', tipo:'Blend', linea:'Mucho Más', tamano:'Etiqueta negra'},
+    {id:'mucho-mas-blanca', nombre:'Mucho Más Blend · Etiqueta Blanca', tipo:'Blend', linea:'Mucho Más', tamano:'Etiqueta blanca'}
+  ];
+
+  // Ilustración de respaldo (cuando aún no hay foto real en productos/<id>.png)
+  function svgProd(p){
+    var t = ((p.tipo||'') + ' ' + (p.nombre||'')).toLowerCase();
+    var vino = /tint|rosso|carmenere|cabernet|merlot|malbec|negra/.test(t) ? '#5b0f2a' : /ros|rosato/.test(t) ? '#e8869a' : /blanc|bianco|sec|sauvignon blanc/.test(t) ? '#e9d98a' : '#7c3aed';
+    var esp = /nuit|lambrusco|espum|burbuj/.test(t);
+    var lin = (p.linea||'').replace(/"/g,'');
+    var svg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">' +
+      '<rect x="44" y="4" width="12" height="'+(esp?14:10)+'" rx="2" fill="'+(esp?'#d4af37':'#2a1f3d')+'"/>' +
+      '<path d="M44 16h12v14c0 4 10 8 10 18v42a6 6 0 0 1-6 6H40a6 6 0 0 1-6-6V48c0-10 10-14 10-18Z" fill="#1f3b2b"/>' +
+      '<path d="M36 60h28v26a4 4 0 0 1-4 4H40a4 4 0 0 1-4-4Z" fill="'+vino+'" opacity=".55"/>' +
+      '<rect x="37" y="52" width="26" height="22" rx="3" fill="#fff" opacity=".95"/>' +
+      '<text x="50" y="62" font-size="5.6" font-weight="800" text-anchor="middle" fill="#2e1065" font-family="Arial">'+lin.toUpperCase().slice(0,14)+'</text>' +
+      '<text x="50" y="69" font-size="4.4" text-anchor="middle" fill="#6d28d9" font-family="Arial">MEICO</text></svg>';
+    return 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
+  }
+  function imgProd(p, el){
+    el.src = 'productos/' + p.id + '.png';
+    el.onerror = function(){ el.onerror = null; el.src = svgProd(p); };
+  }
+
+  // ---------- Guías animadas ----------
+  var GUIAS = {
+    ingreso: {titulo:'Cómo ingresar al punto de venta', pasos:[
+      {t:'Paso 1 · Empezar', x:'Escribe tu nombre y tu documento, elige la ciudad y el punto de venta y toca «Comenzar».', p:{h:'Meico', it:[['Nombre completo',''],['Número de documento',''],['Ciudad · Punto de venta',''],['Comenzar →','bt foco']]}},
+      {t:'Paso 2 · Ubicación', x:'En «Ingreso al PDV» toca «Actualizar ubicación» para registrar tu GPS.', p:{h:'Ingreso al PDV', it:[['Ubicación GPS: no capturada',''],['Actualizar ubicación','bt foco'],['Foto de ingreso (obligatoria)','ft']]}},
+      {t:'Paso 3 · Foto', x:'Toma o sube la foto de ingreso. Sin foto no puedes continuar.', p:{h:'Ingreso al PDV', it:[['Ubicación capturada ✔',''],['📷 Toma la foto de ingreso','ft foco'],['Guardar Ingreso','bt']]}},
+      {t:'Paso 4 · Guardar', x:'Toca «Guardar Ingreso y desbloquear módulos». Ya puedes registrar ventas, degustaciones y obsequios.', p:{h:'Ingreso al PDV', it:[['Ubicación capturada ✔',''],['Foto lista ✔','ft'],['Guardar Ingreso y desbloquear módulos','bt foco']]}}
+    ]},
+    venta: {titulo:'Cómo registrar una venta', pasos:[
+      {t:'Paso 1 · Abrir Ventas', x:'Toca el botón central de módulos y elige «Ventas».', p:{h:'Módulos', it:[['Ingreso ✔',''],['Ventas','bt foco'],['Degustación',''],['Salida','']]}},
+      {t:'Paso 2 · ¿Hubo venta?', x:'Contesta «¿Se realizó venta?» con Sí.', p:{h:'Ventas', it:[['Vinos Meico',''],['¿Se realizó venta?',''],['Sí','bt foco'],['No','']]}},
+      {t:'Paso 3 · Producto', x:'Toca «Agregar producto vendido», elige el vino y escribe cuántas unidades vendiste.', p:{h:'Ventas', it:[['Nuit Dorée Rosé Demi-Sec Ice Edition',''],['Unidades: 3',''],['+ Agregar producto vendido','bt foco']]}},
+      {t:'Si no hubo venta', x:'Elige «No» y el motivo: sin flujo de clientes, cliente no interesado, precio, sin inventario, local cerrado u otro.', p:{h:'Ventas', it:[['No','bt'],['Motivo de no venta','foco'],['Local cerrado','']]}},
+      {t:'Paso 4 · Guardar', x:'Toca «Guardar Ventas». El módulo queda marcado como guardado.', p:{h:'Ventas', it:[['Venta registrada ✔',''],['Guardar Ventas','bt foco']]}}
+    ]},
+    degustacion: {titulo:'Cómo registrar una degustación', pasos:[
+      {t:'Paso 1 · Abrir Degustación', x:'Toca el botón central de módulos y elige «Degustación».', p:{h:'Módulos', it:[['Ventas ✔',''],['Degustación','bt foco'],['Obsequios','']]}},
+      {t:'Paso 2 · ¿Hubo degustación?', x:'Contesta Sí y toca «Agregar vino degustado». Solo a mayores de edad.', p:{h:'Degustaciones', it:[['¿Se realizaron degustaciones?',''],['Sí','bt foco'],['No','']]}},
+      {t:'Paso 3 · Vino y botellas', x:'Elige el vino y escribe cuántas botellas usaste. Agrega una línea por cada vino.', p:{h:'Degustaciones', it:[['Lambrusco Botticello Rosato Dolce','foco'],['Botellas utilizadas: 1,5',''],['+ Agregar vino degustado','']]}},
+      {t:'Paso 4 · Impactos', x:'Escribe cuántas personas abordaste en total y toca «Guardar Degustaciones».', p:{h:'Degustaciones', it:[['Impactos generados: 25','foco'],['Guardar Degustaciones','bt']]}}
+    ]},
+    premios: {titulo:'Cómo registrar los obsequios entregados', pasos:[
+      {t:'Paso 1 · Abrir Obsequios', x:'Entra al módulo «Obsequios» desde el botón de módulos.', p:{h:'Módulos', it:[['Degustación ✔',''],['Obsequios','bt foco'],['Salida','']]}},
+      {t:'Paso 2 · Cantidades', x:'Escribe cuántos entregaste de cada obsequio, así haya sido cero.', p:{h:'Obsequios entregados', it:[['Descorchador: 2','foco']]}},
+      {t:'Paso 3 · Evidencia', x:'Agrega observaciones y, si quieres, una foto del inventario.', p:{h:'Obsequios entregados', it:[['Observaciones',''],['📷 Foto del inventario','ft foco']]}},
+      {t:'Paso 4 · Guardar', x:'Toca «Guardar Obsequios».', p:{h:'Obsequios entregados', it:[['Obsequios registrados ✔',''],['Guardar Obsequios','bt foco']]}}
+    ]},
+    salida: {titulo:'Cómo salir del punto de venta', pasos:[
+      {t:'Opcional · Voz y competencia', x:'Antes de salir puedes agregar la opinión del consumidor y la evidencia de actividad de la competencia.', p:{h:'Voz y competencia', it:[['+ Agregar opinión','foco'],['¿Actividad de la competencia?',''],['+ Agregar evidencia','']]}},
+      {t:'Paso 1 · Foto de salida', x:'En «Salida del PDV» toma o sube la foto de salida. Es obligatoria.', p:{h:'Salida del PDV', it:[['📷 Foto de salida','ft foco'],['Próxima visita','']]}},
+      {t:'Paso 2 · Cierre', x:'Indica la próxima visita programada y escribe las observaciones finales.', p:{h:'Salida del PDV', it:[['Próxima visita programada','foco'],['Observaciones finales','']]}},
+      {t:'Paso 3 · Finalizar', x:'Toca «Finalizar gestión». Tu visita queda guardada y enviada.', p:{h:'Salida del PDV', it:[['Todo listo ✔',''],['Finalizar gestión','bt foco']]}}
+    ]}
+  };
+  GUIAS.completa = {titulo:'Recorrido completo de una visita', pasos:[].concat(GUIAS.ingreso.pasos, GUIAS.venta.pasos.filter(function(s){ return s.t.indexOf('Si no hubo') < 0; }), GUIAS.degustacion.pasos, GUIAS.premios.pasos, GUIAS.salida.pasos)};
+
+  function detenerGuia(){ if(guiaTimer){ clearInterval(guiaTimer); guiaTimer = null; } }
+
+  function crearGuia(id){
+    var g = GUIAS[id]; if(!g) return;
+    detenerGuia();
+    var i = 0, auto = true;
+    var w = document.createElement('div'); w.className = 'aria-guia';
+    w.innerHTML = '<h4></h4><div class="aria-tel"><div class="aria-tel-h"></div><div class="aria-tel-b"></div></div><div class="aria-cap"></div><div class="aria-ctl"><button type="button" data-a="prev" aria-label="Anterior">◀</button><button type="button" data-a="play" aria-label="Pausar o reproducir">❚❚</button><button type="button" data-a="next" aria-label="Siguiente">▶</button></div><div class="aria-pts"></div>';
+    w.querySelector('h4').textContent = '▶ ' + g.titulo;
+    var pts = w.querySelector('.aria-pts');
+    g.pasos.forEach(function(){ pts.appendChild(document.createElement('i')); });
+    function pintar(narrar){
+      var s = g.pasos[i];
+      w.querySelector('.aria-tel-h').textContent = s.p.h;
+      var b = w.querySelector('.aria-tel-b'); b.style.animation = 'none'; void b.offsetWidth; b.style.animation = '';
+      b.innerHTML = s.p.it.map(function(x){ return '<div class="aria-it '+x[1]+'">'+x[0].replace(/</g,'&lt;')+'</div>'; }).join('');
+      w.querySelector('.aria-cap').innerHTML = '<b></b><span></span>';
+      w.querySelector('.aria-cap b').textContent = s.t + ' (' + (i+1) + '/' + g.pasos.length + ')';
+      w.querySelector('.aria-cap span').textContent = s.x;
+      Array.prototype.forEach.call(pts.children, function(d, k){ d.className = k === i ? 'on' : ''; });
+      if(narrar) hablar(s.t.replace(/^.*·\s*/, '') + '. ' + s.x);
+      $('ariaLog').scrollTop = $('ariaLog').scrollHeight;
+    }
+    function siguiente(){ i = (i + 1) % g.pasos.length; pintar(true); }
+    function iniciar(){ detenerGuia(); guiaTimer = setInterval(function(){ if(auto) siguiente(); }, 6500); }
+    w.addEventListener('click', function(e){
+      var a = e.target.getAttribute && e.target.getAttribute('data-a'); if(!a) return;
+      if(a === 'next'){ siguiente(); }
+      else if(a === 'prev'){ i = (i - 1 + g.pasos.length) % g.pasos.length; pintar(true); }
+      else { auto = !auto; e.target.textContent = auto ? '❚❚' : '▶'; if(!auto && TTS) TTS.cancel(); }
+    });
+    $('ariaLog').appendChild(w);
+    pintar(true); iniciar();
+  }
+
+  function verCatalogo(){
+    var w = document.createElement('div'); w.className = 'aria-cat';
+    CATALOGO.forEach(function(p){
+      var d = document.createElement('div'); d.className = 'it';
+      var im = document.createElement('img'); im.alt = p.nombre; im.loading = 'lazy'; imgProd(p, im); d.appendChild(im);
+      var b = document.createElement('b'); b.textContent = p.nombre; d.appendChild(b);
+      var s = document.createElement('span'); s.textContent = [p.tipo, p.tamano].filter(Boolean).join(' · '); d.appendChild(s);
+      w.appendChild(d);
+    });
+    $('ariaLog').appendChild(w); $('ariaLog').scrollTop = $('ariaLog').scrollHeight;
+  }
+
+  // ---------- Mensajes y voz ----------
+  function agregar(texto, quien){
+    var d = document.createElement('div');
+    d.className = 'aria-m ' + (quien === 'u' ? 'u' : 'a');
+    d.textContent = texto;
+    $('ariaLog').appendChild(d);
+    $('ariaLog').scrollTop = $('ariaLog').scrollHeight;
+    return d;
+  }
+
+  function tarjeta(p){
+    var d = document.createElement('div'); d.className = 'aria-prod';
+    var img = document.createElement('img'); img.alt = p.nombre; img.loading = 'lazy';
+    img.src = p.imagen || svgProd(p); img.onerror = function(){ img.onerror = null; img.src = svgProd(p); };
+    d.appendChild(img);
+    var c = document.createElement('div'); c.className = 'aria-prod-txt';
+    var b = document.createElement('b'); b.textContent = p.nombre; c.appendChild(b);
+    var s = document.createElement('span'); s.textContent = [p.tipo, p.linea, p.tamano].filter(Boolean).join(' · '); c.appendChild(s);
+    var ul = document.createElement('ul');
+    (p.car || []).forEach(function(x){ var li = document.createElement('li'); li.textContent = x; ul.appendChild(li); });
+    c.appendChild(ul); d.appendChild(c);
+    $('ariaLog').appendChild(d); $('ariaLog').scrollTop = $('ariaLog').scrollHeight;
+  }
+
+  function hablar(texto){
+    if(!vozActiva || !TTS || !texto) return;
+    TTS.cancel();
+    var u = new SpeechSynthesisUtterance(texto.replace(/[*_#`]/g, ''));
+    u.lang = 'es-CO'; u.rate = 1.0; u.pitch = 1.0;
+    var v = TTS.getVoices().find(function(x){ return /^es/i.test(x.lang); });
+    if(v) u.voice = v;
+    TTS.speak(u);
+  }
+
+  // Preguntas que se resuelven en el teléfono (guía animada o catálogo), sin gastar IA
+  function intentoLocal(q){
+    var t = q.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+    if(/catalogo|que (productos|vinos)|(productos|vinos) (hay|tiene|son|manejan)|ver (productos|vinos)|portafolio/.test(t)) return {c:1};
+    if(/recorrido|proceso completo|todo el proceso|paso a paso completo|como se usa|como funciona|como uso la (app|herramienta)/.test(t)) return {g:'completa'};
+    if(/(como|donde).*(ingres|entr|comenz|empez|inici)|ingreso|foto de ingreso|ubicacion|gps/.test(t)) return {g:'ingreso'};
+    if(/venta|vend|unidades/.test(t)) return {g:'venta'};
+    if(/degust|probar|muestra|botella|impacto/.test(t)) return {g:'degustacion'};
+    if(/premio|obsequio|regalo|entreg/.test(t)) return {g:'premios'};
+    if(/salida|salir|finaliz|terminar|cerrar la visita|cerrar visita/.test(t)) return {g:'salida'};
+    return null;
+  }
+
+  function mostrarGuia(id, preguntaVisible){
+    if(preguntaVisible) agregar(preguntaVisible, 'u');
+    var m = agregar('Te lo muestro paso a paso 👇', 'a');
+    hablar('Te lo muestro paso a paso.');
+    crearGuia(id);
+  }
+  function mostrarCatalogo(preguntaVisible){
+    if(preguntaVisible) agregar(preguntaVisible, 'u');
+    agregar('Estos son los vinos Meico de la campaña de Navidad:', 'a');
+    hablar('Estos son los vinos Meico de la campaña de Navidad.');
+    verCatalogo();
+  }
+
+  // Al abrir: pantalla "Conectando…" un momento y luego el chat
+  function abrirChat(){
+    $('ariaPanel').classList.add('open');
+    if(conectada){ mostrarChat(); return; }
+    $('ariaConectando').classList.add('on');
+    $('ariaChat').classList.remove('on');
+    clearTimeout(timerConexion);
+    timerConexion = setTimeout(function(){ conectada = true; mostrarChat(); }, 1600);
+  }
+  function mostrarChat(){
+    $('ariaConectando').classList.remove('on');
+    $('ariaChat').classList.add('on');
+    setTimeout(function(){ $('ariaTexto').focus(); }, 150);
+  }
+
+  async function preguntar(pregunta){
+    pregunta = (pregunta || '').trim();
+    if(enviando || !pregunta) return;
+    var loc = intentoLocal(pregunta);
+    if(loc){ if(loc.c) mostrarCatalogo(pregunta); else mostrarGuia(loc.g, pregunta); return; }
+    if(!ARIA_URL){ agregar('ARIA no está configurada todavía.', 'a'); return; }
+    enviando = true;
+    agregar(pregunta, 'u');
+    var pensando = agregar('Pensando…', 'a');
+    try{
+      // text/plain evita el preflight CORS, igual que el resto de la app
+      var res = await fetch(ARIA_URL, {method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'},
+        body: JSON.stringify({accion:'ayuda', pregunta: pregunta.slice(0,400)}), redirect:'follow'});
+      var data = await res.json();
+      var txt = data && data.respuesta ? data.respuesta : (data && data.error ? data.error : 'No pude responder en este momento.');
+      pensando.textContent = txt;
+      if(data && data.productos && data.productos.length){ data.productos.forEach(tarjeta); }
+      hablar(txt);
+    }catch(e){
+      pensando.textContent = 'Sin conexión con ARIA. Intenta de nuevo cuando tengas señal.';
+    }finally{ enviando = false; }
+  }
+
+  $('ariaBtn').onclick = abrirChat;
+  $('ariaCerrar').onclick = function(){ $('ariaPanel').classList.remove('open'); detenerGuia(); if(TTS) TTS.cancel(); };
+  $('ariaEnviar').onclick = function(){ var t = $('ariaTexto').value; $('ariaTexto').value=''; preguntar(t); };
+  $('ariaTexto').addEventListener('keydown', function(e){ if(e.key === 'Enter'){ e.preventDefault(); $('ariaEnviar').click(); } });
+  $('ariaSug').addEventListener('click', function(e){
+    var b = e.target.closest ? e.target.closest('button') : e.target; if(!b) return;
+    if(b.getAttribute('data-g')) mostrarGuia(b.getAttribute('data-g'), b.textContent.replace(/^▶\s*/, ''));
+    else if(b.getAttribute('data-cat')) mostrarCatalogo('Ver catálogo');
+    else if(b.getAttribute('data-tut')){ $('ariaCerrar').click(); setTimeout(function(){ if(window.abrirTutorial) window.abrirTutorial(); }, 250); }
+  });
+  $('ariaVoz').onclick = function(){
+    vozActiva = !vozActiva;
+    $('ariaVoz').textContent = vozActiva ? '🔊' : '🔇';
+    if(!vozActiva && TTS) TTS.cancel();
+  };
+
+  if(!SR){
+    $('ariaMic').disabled = true;
+    $('ariaNota').textContent = 'El micrófono no está disponible en este navegador. Usa Chrome en Android o escribe la pregunta.';
+  } else {
+    var rec = new SR(); rec.lang = 'es-CO'; rec.interimResults = false; rec.maxAlternatives = 1;
+    var escuchando = false;
+    rec.onresult = function(ev){ var t = ev.results[0][0].transcript; $('ariaTexto').value = ''; preguntar(t); };
+    rec.onerror = function(){ escuchando = false; $('ariaMic').classList.remove('on'); agregar('No te escuché bien. Intenta de nuevo o escribe la pregunta.', 'a'); };
+    rec.onend = function(){ escuchando = false; $('ariaMic').classList.remove('on'); };
+    $('ariaMic').onclick = function(){
+      if(escuchando){ rec.stop(); return; }
+      if(TTS) TTS.cancel();
+      try{ rec.start(); escuchando = true; $('ariaMic').classList.add('on'); }catch(e){}
+    };
+  }
+})();
+</script>
+
+</body>
+</html>
